@@ -12,6 +12,7 @@ struct AskView: View {
     @State private var total = 1
     @State private var breathing = false
     @State private var saidNo = false
+    @State private var goodCallLine = GoodCallView.lines.randomElement() ?? ""
 
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -19,7 +20,7 @@ struct AskView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if saidNo {
-                GoodCallView(appID: appID) { router.askingAppID = nil }
+                GoodCallView(appID: appID, line: goodCallLine) { router.askingAppID = nil }
             } else if let app = store.app(appID) {
                 askBody(app)
             } else {
@@ -31,7 +32,7 @@ struct AskView: View {
         }
         .onAppear(perform: start)
         .onReceive(ticker) { _ in
-            if remaining > 0 { remaining -= 1 }
+            if !saidNo && remaining > 0 { remaining -= 1 }
         }
     }
 
@@ -93,7 +94,7 @@ struct AskView: View {
     }
 
     private var ring: some View {
-        let progress = 1 - Double(remaining) / Double(total)
+        let progress = 1 - Double(max(remaining - 1, 0)) / Double(total)
         return ZStack {
             Circle().stroke(.white.opacity(0.12), lineWidth: 2)
             Circle()
@@ -108,13 +109,14 @@ struct AskView: View {
 
     private func proceed(_ app: GatedApp) {
         store.record(.proceed, for: appID, questionID: question?.id)
-        router.askingAppID = nil
         if let url = URL(string: app.urlScheme) { openURL(url) }
+        router.askingAppID = nil
     }
 }
 
 struct GoodCallView: View {
     let appID: String
+    let line: String
     let done: () -> Void
 
     @EnvironmentObject var store: Store
@@ -136,14 +138,14 @@ struct GoodCallView: View {
             Text("Good call.")
                 .font(.system(size: 40, weight: .bold, design: .serif))
                 .foregroundStyle(.white)
-            Text(Self.lines.randomElement() ?? "")
+            Text(line)
                 .foregroundStyle(.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 28)
             Spacer()
             HStack(spacing: 48) {
                 stat("\(todayNos)", todayNos == 1 ? "no today" : "nos today")
-                stat("\(streak)", streak == 1 ? "day streak" : "day streak")
+                stat("\(streak)", "day streak")
             }
             Spacer()
             Button("Done", action: done)
