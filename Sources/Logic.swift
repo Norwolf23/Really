@@ -35,4 +35,43 @@ enum Logic {
         if candidates.count > 1 { candidates.removeAll { $0.id == app.lastQuestionID } }
         return candidates.randomElement(using: &rng)
     }
+
+    static func streak(events: [CheckIn], now: Date, calendar: Calendar = .current) -> Int {
+        let noDays = Set(events.filter { $0.decision == .no }.map { calendar.startOfDay(for: $0.at) })
+        let today = calendar.startOfDay(for: now)
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else { return 0 }
+        var day: Date
+        if noDays.contains(today) { day = today } else if noDays.contains(yesterday) { day = yesterday } else { return 0 }
+        var count = 0
+        while noDays.contains(day) {
+            count += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = previous
+        }
+        return count
+    }
+
+    static func timeSavedMinutes(events: [CheckIn], apps: [GatedApp]) -> Int {
+        var minutes: [String: Int] = [:]
+        for app in apps { minutes[app.id] = app.sessionMinutes }
+        return events.filter { $0.decision == .no }.reduce(0) { $0 + (minutes[$1.appID] ?? 0) }
+    }
+
+    struct DayCount: Identifiable {
+        let day: Date
+        var proceeds: Int
+        var nos: Int
+        var id: Date { day }
+    }
+
+    static func dailyCounts(events: [CheckIn], days: Int, now: Date, calendar: Calendar = .current) -> [DayCount] {
+        let today = calendar.startOfDay(for: now)
+        return (0..<days).reversed().compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: today) else { return nil }
+            let that = events.filter { calendar.isDate($0.at, inSameDayAs: day) }
+            return DayCount(day: day,
+                            proceeds: that.filter { $0.decision == .proceed }.count,
+                            nos: that.filter { $0.decision == .no }.count)
+        }
+    }
 }

@@ -136,4 +136,58 @@ final class LogicTests: XCTestCase {
         var rng = SystemRandomNumberGenerator()
         XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "c")
     }
+
+    // MARK: streak
+
+    func daysAgo(_ d: Int, _ decision: Decision = .no) -> CheckIn {
+        CheckIn(appID: "instagram", at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision)
+    }
+
+    func testStreakZeroWithNoEvents() {
+        XCTAssertEqual(Logic.streak(events: [], now: now, calendar: cal), 0)
+    }
+
+    func testStreakCountsConsecutiveDaysEndingToday() {
+        XCTAssertEqual(Logic.streak(events: [daysAgo(0), daysAgo(1), daysAgo(2)], now: now, calendar: cal), 3)
+    }
+
+    func testStreakSurvivesWhenTodayHasNoNoYet() {
+        XCTAssertEqual(Logic.streak(events: [daysAgo(1), daysAgo(2)], now: now, calendar: cal), 2)
+    }
+
+    func testStreakBreaksOnGap() {
+        XCTAssertEqual(Logic.streak(events: [daysAgo(0), daysAgo(2), daysAgo(3)], now: now, calendar: cal), 1)
+    }
+
+    func testStreakIgnoresContinueEvents() {
+        XCTAssertEqual(Logic.streak(events: [daysAgo(0, .proceed), daysAgo(1)], now: now, calendar: cal), 1)
+        XCTAssertEqual(Logic.streak(events: [daysAgo(0, .proceed), daysAgo(1, .proceed)], now: now, calendar: cal), 0)
+    }
+
+    func testStreakZeroWhenLastNoWasTwoDaysAgo() {
+        XCTAssertEqual(Logic.streak(events: [daysAgo(2), daysAgo(3)], now: now, calendar: cal), 0)
+    }
+
+    // MARK: time saved
+
+    func testTimeSavedSumsSessionMinutesOverNoEvents() {
+        var ig = app("instagram"); ig.sessionMinutes = 12
+        var tt = app("tiktok"); tt.sessionMinutes = 20
+        let events = [event("instagram", minutesAgo: 1), event("instagram", minutesAgo: 2, .proceed), event("tiktok", minutesAgo: 3), event("gone", minutesAgo: 4)]
+        XCTAssertEqual(Logic.timeSavedMinutes(events: events, apps: [ig, tt]), 32)
+    }
+
+    // MARK: daily counts
+
+    func testDailyCountsCoverRequestedDaysOldestFirst() {
+        let events = [daysAgo(0), daysAgo(0, .proceed), daysAgo(1), daysAgo(6), daysAgo(7)]
+        let days = Logic.dailyCounts(events: events, days: 7, now: now, calendar: cal)
+        XCTAssertEqual(days.count, 7)
+        XCTAssertEqual(days.last?.day, cal.startOfDay(for: now))
+        XCTAssertEqual(days.last?.nos, 1)
+        XCTAssertEqual(days.last?.proceeds, 1)
+        XCTAssertEqual(days[5].nos, 1)
+        XCTAssertEqual(days[0].nos, 1)
+        XCTAssertEqual(days[0].proceeds, 0)
+    }
 }
