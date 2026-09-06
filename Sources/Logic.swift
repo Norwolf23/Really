@@ -22,4 +22,17 @@ enum Logic {
         if openNumber >= annoyedAt { return .annoyed }
         return .normal
     }
+
+    static func pickQuestion<G: RandomNumberGenerator>(for app: GatedApp, pack: [Question], tier: Tier, using rng: inout G) -> Question? {
+        let pool = app.source == .starterPack ? pack : app.customQuestions
+        guard !pool.isEmpty else { return nil }
+        if app.mode == .single {
+            return pool.first { $0.id == app.singleQuestionID } ?? pool[0]
+        }
+        var candidates = pool.filter { $0.tier == tier }
+        if candidates.isEmpty { candidates = pool.filter { $0.tier < tier } }
+        if candidates.isEmpty { candidates = pool }
+        if candidates.count > 1 { candidates.removeAll { $0.id == app.lastQuestionID } }
+        return candidates.randomElement(using: &rng)
+    }
 }

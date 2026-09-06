@@ -68,4 +68,72 @@ final class LogicTests: XCTestCase {
     func testTierBrutalWinsWhenThresholdsOverlap() {
         XCTAssertEqual(Logic.tier(openNumber: 2, annoyedAt: 5, brutalAt: 2), .brutal)
     }
+
+    // MARK: question selection
+
+    struct FixedRNG: RandomNumberGenerator {
+        var value: UInt64
+        mutating func next() -> UInt64 { value }
+    }
+
+    let pack: [Question] = [
+        Question(id: "n0", text: "n0", tier: .normal),
+        Question(id: "n1", text: "n1", tier: .normal),
+        Question(id: "a0", text: "a0", tier: .annoyed),
+        Question(id: "b0", text: "b0", tier: .brutal),
+    ]
+
+    func testPickReturnsNilForEmptyPool() {
+        var rng = FixedRNG(value: 0)
+        XCTAssertNil(Logic.pickQuestion(for: app(), pack: [], tier: .normal, using: &rng))
+    }
+
+    func testPickSingleReturnsChosenQuestion() {
+        var a = app(); a.mode = .single; a.singleQuestionID = "a0"
+        var rng = FixedRNG(value: 0)
+        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .brutal, using: &rng)?.id, "a0")
+    }
+
+    func testPickSingleFallsBackToFirstWhenIDMissing() {
+        var a = app(); a.mode = .single; a.singleQuestionID = "gone"
+        var rng = FixedRNG(value: 0)
+        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "n0")
+    }
+
+    func testPickRotateStaysInTier() {
+        var rng = SystemRandomNumberGenerator()
+        for _ in 0..<20 {
+            let q = Logic.pickQuestion(for: app(), pack: pack, tier: .annoyed, using: &rng)
+            XCTAssertEqual(q?.tier, .annoyed)
+        }
+    }
+
+    func testPickRotateFallsBackToLowerTierThenAnything() {
+        let onlyNormal = pack.filter { $0.tier == .normal }
+        var rng = SystemRandomNumberGenerator()
+        XCTAssertEqual(Logic.pickQuestion(for: app(), pack: onlyNormal, tier: .brutal, using: &rng)?.tier, .normal)
+        let onlyBrutal = pack.filter { $0.tier == .brutal }
+        XCTAssertEqual(Logic.pickQuestion(for: app(), pack: onlyBrutal, tier: .normal, using: &rng)?.id, "b0")
+    }
+
+    func testPickRotateAvoidsLastShown() {
+        var a = app(); a.lastQuestionID = "n0"
+        var rng = SystemRandomNumberGenerator()
+        for _ in 0..<20 {
+            XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "n1")
+        }
+    }
+
+    func testPickRotateRepeatsWhenOnlyOneCandidate() {
+        var a = app(); a.lastQuestionID = "a0"
+        var rng = SystemRandomNumberGenerator()
+        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .annoyed, using: &rng)?.id, "a0")
+    }
+
+    func testPickUsesCustomQuestionsWhenSourceIsCustom() {
+        var a = app(); a.source = .custom
+        a.customQuestions = [Question(id: "c", text: "custom", tier: .normal)]
+        var rng = SystemRandomNumberGenerator()
+        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "c")
+    }
 }
