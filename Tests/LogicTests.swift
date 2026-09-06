@@ -190,4 +190,76 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(days[0].nos, 1)
         XCTAssertEqual(days[0].proceeds, 0)
     }
+
+    // MARK: effective tier
+
+    func testEffectiveTierIgnoresOpensWhenEscalationOff() {
+        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 40, annoyedAt: 3, brutalAt: 6, escalates: false), .normal)
+        XCTAssertEqual(Logic.effectiveTier(base: .brutal, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: false), .brutal)
+    }
+
+    func testEffectiveTierTakesHigherOfBaseAndEscalation() {
+        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 3, annoyedAt: 3, brutalAt: 6, escalates: true), .annoyed)
+        XCTAssertEqual(Logic.effectiveTier(base: .annoyed, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: true), .annoyed)
+        XCTAssertEqual(Logic.effectiveTier(base: .brutal, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: true), .brutal)
+        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 6, annoyedAt: 3, brutalAt: 6, escalates: true), .brutal)
+    }
+
+    // MARK: reasons
+
+    func reasoned(_ reason: String?, daysAgo d: Int = 0, _ decision: Decision = .proceed) -> CheckIn {
+        CheckIn(appID: "instagram", at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision, reason: reason)
+    }
+
+    func testReasonCountsOnlyCountsProceedWithReasonInsideWindow() {
+        let events = [
+            reasoned("Bored"), reasoned("Bored"), reasoned("Checking one thing"),
+            reasoned("Bored", daysAgo: 0, .no), reasoned(nil), reasoned(""), reasoned("Old", daysAgo: 10),
+        ]
+        let since = cal.date(byAdding: .day, value: -7, to: now)!
+        let counts = Logic.reasonCounts(events: events, since: since)
+        XCTAssertEqual(counts.map(\.reason), ["Bored", "Checking one thing"])
+        XCTAssertEqual(counts.map(\.count), [2, 1])
+    }
+
+    func testReasonCountsTieBreaksAlphabetically() {
+        let counts = Logic.reasonCounts(events: [reasoned("Zzz"), reasoned("Aaa")], since: now.addingTimeInterval(-60))
+        XCTAssertEqual(counts.map(\.reason), ["Aaa", "Zzz"])
+    }
+
+    // MARK: worst hour
+
+    func at(hour: Int, _ decision: Decision = .proceed) -> CheckIn {
+        CheckIn(appID: "instagram", at: cal.date(bySettingHour: hour, minute: 0, second: 0, of: now)!, decision: decision)
+    }
+
+    func testWorstHourNilWhenNoProceeds() {
+        XCTAssertNil(Logic.worstHour(events: [], calendar: cal))
+        XCTAssertNil(Logic.worstHour(events: [at(hour: 9, .no)], calendar: cal))
+    }
+
+    func testWorstHourPicksMostProceedsIgnoringNos() {
+        let events = [at(hour: 23), at(hour: 23), at(hour: 9), at(hour: 9, .no), at(hour: 9, .no), at(hour: 9, .no)]
+        XCTAssertEqual(Logic.worstHour(events: events, calendar: cal), 23)
+    }
+
+    func testWorstHourTieGoesToEarlierHour() {
+        XCTAssertEqual(Logic.worstHour(events: [at(hour: 23), at(hour: 9)], calendar: cal), 9)
+    }
+
+    // MARK: grouping
+
+    func testGroupedByDayNewestFirst() {
+        let today10 = at(hour: 10), today11 = at(hour: 11)
+        let yesterday = CheckIn(appID: "instagram", at: cal.date(byAdding: .day, value: -1, to: at(hour: 9).at)!, decision: .no)
+        let groups = Logic.groupedByDay(events: [yesterday, today10, today11], calendar: cal)
+        XCTAssertEqual(groups.count, 2)
+        XCTAssertEqual(groups[0].day, cal.startOfDay(for: now))
+        XCTAssertEqual(groups[0].events.map(\.id), [today11.id, today10.id])
+        XCTAssertEqual(groups[1].events.map(\.id), [yesterday.id])
+    }
+
+    func testGroupedByDayEmpty() {
+        XCTAssertTrue(Logic.groupedByDay(events: [], calendar: cal).isEmpty)
+    }
 }
