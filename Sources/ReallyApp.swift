@@ -42,12 +42,7 @@ struct AskTarget: Identifiable {
     let id: String
 }
 
-// Placeholders until Tasks 10 and 12. Delete each when its real view lands.
-struct AppsView: View {
-    @EnvironmentObject var router: Router
-    var body: some View { Button("Try Instagram") { router.askingAppID = "instagram" } }
-}
-
+// Placeholder until Task 12. Delete when its real view lands.
 struct StatsView: View {
     var body: some View { Text("Stats") }
 }
@@ -56,4 +51,13 @@ struct StatsView: View {
 final class Router: ObservableObject {
     static let shared = Router()
     @Published var askingAppID: String?
+}
+
+// Placeholder until Task 11.
+struct AppSettingsView: View {
+    let appID: String
+    @EnvironmentObject var store: Store
+    var body: some View {
+        if let app = store.app(appID) { SetupView(app: app) }
+    }
 }
