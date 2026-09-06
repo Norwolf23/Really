@@ -42,11 +42,6 @@ struct AskTarget: Identifiable {
     let id: String
 }
 
-// Placeholder until Task 12. Delete when its real view lands.
-struct StatsView: View {
-    var body: some View { Text("Stats") }
-}
-
 @MainActor
 final class Router: ObservableObject {
     static let shared = Router()
