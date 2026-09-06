@@ -40,7 +40,7 @@ struct StatsView: View {
                     .padding(.vertical, 8)
                 }
                 Section("Excuses, last 7 days") {
-                    let counts = Logic.reasonCounts(events: store.events, since: now.addingTimeInterval(-7 * 86400))
+                    let counts = Logic.reasonCounts(events: store.events, since: Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: now)) ?? now)
                     if counts.isEmpty {
                         Text("None yet.").foregroundStyle(.secondary)
                     } else {

@@ -11,6 +11,7 @@ struct ReasonSheet: View {
     private var trimmed: String { other.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
+        ScrollView {
         VStack(spacing: 14) {
             Text("Why?")
                 .font(.system(size: 30, weight: .semibold, design: .serif))
@@ -31,6 +32,7 @@ struct ReasonSheet: View {
                         .textFieldStyle(.roundedBorder)
                         .focused($otherFocused)
                         .onSubmit { if !trimmed.isEmpty { choose(trimmed) } }
+                        .onAppear { otherFocused = true }
                     Button {
                         choose(trimmed)
                     } label: {
@@ -43,7 +45,6 @@ struct ReasonSheet: View {
             } else {
                 Button("Other") {
                     showOther = true
-                    otherFocused = true
                 }
                 .buttonStyle(.bordered)
                 .tint(.gray)
@@ -51,7 +52,8 @@ struct ReasonSheet: View {
             Spacer()
         }
         .padding(.horizontal, 28)
-        .presentationDetents([.medium])
+        }
+        .presentationDetents([.medium, .large])
         .presentationBackground(.black)
     }
 }

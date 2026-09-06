@@ -33,6 +33,7 @@ struct OnboardingView: View {
             .transition(.opacity)
         }
         .animation(.easeInOut(duration: 0.25), value: step)
+        .onAppear { meanness = store.settings.meanness; chosen = Set(store.apps.map(\.id)) }
     }
 
     // MARK: pages
@@ -113,7 +114,7 @@ struct OnboardingView: View {
     }
 
     private var setup: some View {
-        let name = store.apps.first?.name ?? "the app"
+        let name = Catalog.entries.first { chosen.contains($0.id) }?.name ?? store.apps.first?.name ?? "the app"
         return VStack(spacing: 20) {
             heading("Set up \(name)")
             ScrollView {

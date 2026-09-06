@@ -33,6 +33,7 @@ struct RootView: View {
                 AskView(appID: target.id)
             }
         }
+        // Both covers effectively chain on the TabView (Group is transparent). Works on iOS 17; onboarding finishes before any automation can exist, so they never present together.
         .fullScreenCover(isPresented: onboarding) {
             OnboardingView()
         }
