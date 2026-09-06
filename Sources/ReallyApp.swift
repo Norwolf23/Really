@@ -52,12 +52,3 @@ final class Router: ObservableObject {
     static let shared = Router()
     @Published var askingAppID: String?
 }
-
-// Placeholder until Task 11.
-struct AppSettingsView: View {
-    let appID: String
-    @EnvironmentObject var store: Store
-    var body: some View {
-        if let app = store.app(appID) { SetupView(app: app) }
-    }
-}
