@@ -5,7 +5,8 @@ import os
 /// ponytail: fine for a few events a day; move to SwiftData if events.json passes a few MB.
 @MainActor
 final class Store: ObservableObject {
-    static let shared = Store()
+    // Intents run in the app process and share this instance. If they ever move to an extension, two Store instances will overwrite each other's JSON.
+    static var shared = Store()
     private static let log = Logger(subsystem: "studio.nickson.really", category: "store")
 
     @Published var apps: [GatedApp] { didSet { save() } }
@@ -85,7 +86,9 @@ final class Store: ObservableObject {
             decoder.dateDecodingStrategy = .secondsSince1970
             return try decoder.decode(T.self, from: data)
         } catch {
-            Store.log.error("load \(url.lastPathComponent, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+            Store.log.error("load \(url.lastPathComponent, privacy: .public) failed, moving aside as .bak: \(error.localizedDescription, privacy: .public)")
+            try? fileManager.removeItem(at: url.appendingPathExtension("bak"))
+            try? fileManager.moveItem(at: url, to: url.appendingPathExtension("bak"))
             return nil
         }
     }

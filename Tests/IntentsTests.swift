@@ -4,8 +4,7 @@ import XCTest
 @MainActor
 final class IntentsTests: XCTestCase {
     override func setUp() {
-        Store.shared.apps = []
-        Store.shared.events = []
+        Store.shared = Store(directory: FileManager.default.temporaryDirectory.appendingPathComponent("really-intents-\(UUID().uuidString)"))
         Router.shared.askingAppID = nil
     }
 
