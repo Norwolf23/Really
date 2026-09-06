@@ -37,6 +37,7 @@ struct AskView: View {
         }
         .sheet(isPresented: $choosingReason) {
             ReasonSheet(reasons: Packs.reasons(for: appID)) { reason in
+                guard choosingReason else { return }
                 choosingReason = false
                 proceed(reason: reason)
             }
