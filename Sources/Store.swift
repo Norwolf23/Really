@@ -23,7 +23,7 @@ final class Store: ObservableObject {
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         } catch {
-            Store.log.error("create directory failed: \(error.localizedDescription)")
+            Store.log.error("create directory failed: \(error.localizedDescription, privacy: .public)")
         }
         appsURL = directory.appendingPathComponent("apps.json")
         eventsURL = directory.appendingPathComponent("events.json")
@@ -67,12 +67,12 @@ final class Store: ObservableObject {
         do {
             try Store.write(apps, to: appsURL)
         } catch {
-            Store.log.error("save apps.json failed: \(error.localizedDescription)")
+            Store.log.error("save apps.json failed: \(error.localizedDescription, privacy: .public)")
         }
         do {
             try Store.write(events, to: eventsURL)
         } catch {
-            Store.log.error("save events.json failed: \(error.localizedDescription)")
+            Store.log.error("save events.json failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -85,7 +85,7 @@ final class Store: ObservableObject {
             decoder.dateDecodingStrategy = .secondsSince1970
             return try decoder.decode(T.self, from: data)
         } catch {
-            Store.log.error("load \(url.lastPathComponent) failed: \(error.localizedDescription)")
+            Store.log.error("load \(url.lastPathComponent, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
