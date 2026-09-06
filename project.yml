@@ -1,0 +1,60 @@
+name: Really
+options:
+  bundleIdPrefix: studio.nickson
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  Really:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - Resources
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: "Really?"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        NSHumanReadableCopyright: "© 2026 Nickson Studio"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIUserInterfaceStyle: Dark
+    settings:
+      base:
+        PRODUCT_NAME: Really
+        PRODUCT_BUNDLE_IDENTIFIER: studio.nickson.really
+        DEVELOPMENT_TEAM: 6272CRNH9G
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: 1
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"
+  ReallyTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Really
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: studio.nickson.really.tests
+        DEVELOPMENT_TEAM: 6272CRNH9G
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "5.0"
+schemes:
+  Really:
+    build:
+      targets:
+        Really: all
+        ReallyTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ReallyTests
