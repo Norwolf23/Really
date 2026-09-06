@@ -1,10 +1,12 @@
 import Foundation
+import os
 
 /// All app state. Two JSON files, rewritten whole on every change.
 /// ponytail: fine for a few events a day; move to SwiftData if events.json passes a few MB.
 @MainActor
 final class Store: ObservableObject {
     static let shared = Store()
+    private static let log = Logger(subsystem: "studio.nickson.really", category: "store")
 
     @Published var apps: [GatedApp] { didSet { save() } }
     @Published var events: [CheckIn] { didSet { save() } }
@@ -18,7 +20,11 @@ final class Store: ObservableObject {
     }
 
     init(directory: URL = Store.defaultDirectory) {
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            Store.log.error("create directory failed: \(error.localizedDescription)")
+        }
         appsURL = directory.appendingPathComponent("apps.json")
         eventsURL = directory.appendingPathComponent("events.json")
         apps = Store.load([GatedApp].self, from: appsURL) ?? []
@@ -58,15 +64,30 @@ final class Store: ObservableObject {
     }
 
     private func save() {
-        try? Store.write(apps, to: appsURL)
-        try? Store.write(events, to: eventsURL)
+        do {
+            try Store.write(apps, to: appsURL)
+        } catch {
+            Store.log.error("save apps.json failed: \(error.localizedDescription)")
+        }
+        do {
+            try Store.write(events, to: eventsURL)
+        } catch {
+            Store.log.error("save events.json failed: \(error.localizedDescription)")
+        }
     }
 
     private static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
-        return try? decoder.decode(T.self, from: data)
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: url.path) else { return nil }
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .secondsSince1970
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            Store.log.error("load \(url.lastPathComponent) failed: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     private static func write<T: Encodable>(_ value: T, to url: URL) throws {
