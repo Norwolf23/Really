@@ -34,5 +34,11 @@
     "Go ahead. Add another forty minutes you won't remember.",
     "You already know the answer. You just want permission.",
     "No, seriously. Really?"
+  ],
+  "reasons": [
+    "Checking one thing",
+    "Someone posted",
+    "Bored",
+    "Avoiding something"
   ]
 }

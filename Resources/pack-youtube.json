@@ -34,5 +34,11 @@
     "You already know the video won't matter tomorrow. Press play anyway.",
     "This is what one video looks like from the outside. It looks like tonight.",
     "No, seriously. Really?"
+  ],
+  "reasons": [
+    "One video, then done",
+    "Something to eat to",
+    "Bored",
+    "Avoiding something"
   ]
 }

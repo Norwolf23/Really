@@ -39,4 +39,24 @@ final class PacksTests: XCTestCase {
             }
         }
     }
+
+    func testEveryCatalogAppHasThreeToFourReasons() {
+        for entry in Catalog.entries {
+            let reasons = Packs.reasons(for: entry.id, bundle: .main)
+            XCTAssertTrue((3...4).contains(reasons.count), "\(entry.id): \(reasons.count)")
+            for reason in reasons { XCTAssertFalse(reason.contains("!"), reason) }
+        }
+    }
+
+    func testGenericReasonsAndFallback() {
+        let generic = Packs.reasons(for: "generic", bundle: .main)
+        XCTAssertEqual(generic, ["Checking one thing", "Bored", "Avoiding something", "No reason"])
+        XCTAssertEqual(Packs.reasons(for: "custom-abc", bundle: .main), generic)
+        XCTAssertEqual(Packs.reasons(for: "does-not-exist", bundle: .main), generic)
+    }
+
+    func testReasonsKeyDoesNotLeakIntoQuestions() {
+        let questions = Packs.questions(for: "instagram", bundle: .main)
+        XCTAssertEqual(questions.count, 30)
+    }
 }
