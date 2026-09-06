@@ -40,11 +40,14 @@ struct AppSettingsView: View {
 
                 if current.source == .custom {
                     Section("My questions") {
-                        ForEach(current.customQuestions) { question in
+                        ForEach(app.customQuestions) { $question in
                             HStack {
-                                Text(question.text)
-                                Spacer()
-                                Text(question.tier.label).font(.caption).foregroundStyle(.secondary)
+                                TextField("Question", text: $question.text)
+                                Picker("", selection: $question.tier) {
+                                    ForEach(Tier.allCases, id: \.self) { Text($0.label) }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
                             }
                         }
                         .onDelete { offsets in
@@ -79,6 +82,9 @@ struct AppSettingsView: View {
                 }
             }
             .navigationTitle(current.name)
+            .onChange(of: current.source) { _, _ in
+                app.wrappedValue.singleQuestionID = nil
+            }
         }
     }
 
