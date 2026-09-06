@@ -24,6 +24,8 @@ struct RootView: View {
                 .tabItem { Label("Apps", systemImage: "app.badge") }
             StatsView()
                 .tabItem { Label("Stats", systemImage: "chart.bar") }
+            SettingsView()
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .fullScreenCover(item: asking) { target in
             AskView(appID: target.id)
