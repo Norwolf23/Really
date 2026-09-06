@@ -60,4 +60,24 @@ final class ModelsTests: XCTestCase {
         XCTAssertNotEqual(a.id, b.id)
         XCTAssertEqual(a.sessionMinutes, 10)
     }
+
+    func testCheckInDecodesWithoutReasonKey() throws {
+        let json = #"{"id":"6B29FC40-CA47-1067-B31D-00DD010662DA","appID":"instagram","at":1800000000,"decision":"no"}"#
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        let event = try decoder.decode(CheckIn.self, from: Data(json.utf8))
+        XCTAssertNil(event.reason)
+        XCTAssertEqual(event.decision, .no)
+    }
+
+    func testSettingsDefaultsAndRoundTrip() throws {
+        let defaults = Settings()
+        XCTAssertFalse(defaults.hasOnboarded)
+        XCTAssertEqual(defaults.meanness, .normal)
+        XCTAssertTrue(defaults.escalates)
+        var s = defaults
+        s.hasOnboarded = true; s.meanness = .brutal; s.escalates = false
+        let back = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(s))
+        XCTAssertEqual(back, s)
+    }
 }
