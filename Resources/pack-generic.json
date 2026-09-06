@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Are you here on purpose?",
+    "What are you actually here to do?",
+    "Was this a decision or a reflex?",
+    "What were you doing thirty seconds ago?",
+    "Is there anything in here you can't get later?",
+    "Bored, or avoiding something?",
+    "You could just put the phone down. Wild, I know.",
+    "Name the one thing you'll do in here. Then do only that.",
+    "Did you mean to open this, or did it open you?",
+    "Quick check: will this feel good in ten minutes?"
+  ],
+  "annoyed": [
+    "Again? Really?",
+    "Third time today. Anything new? Didn't think so.",
+    "You said \"just one thing\" last time too.",
+    "This is a habit now. Habits don't need you awake.",
+    "The thing you're avoiding is still there. This won't fix that.",
+    "Your thumb did this, not you. Take it back.",
+    "It's been a few minutes. Nothing changed. Nothing ever does.",
+    "You're not looking for something. You're looking away.",
+    "You keep coming back like it owes you money.",
+    "Same app, same reason, same result. Go on then."
+  ],
+  "brutal": [
+    "Really. Again. Even your phone is embarrassed.",
+    "At this point the app is using you.",
+    "There is nothing in there. There was nothing the last five times.",
+    "Your day is being spent in thirty-second coins and you're the vending machine.",
+    "You already know the answer. You want permission. Fine, but I saw that.",
+    "Congratulations, you're the engagement metric now.",
+    "Imagine your screen time as a job. You'd be employee of the month.",
+    "Go ahead. Another half hour you'll never get back.",
+    "This is what \"later\" looks like. It's still now.",
+    "No, seriously. Really?"
+  ]
+}
