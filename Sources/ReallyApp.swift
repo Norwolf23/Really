@@ -9,3 +9,9 @@ struct ReallyApp: App {
         }
     }
 }
+
+@MainActor
+final class Router: ObservableObject {
+    static let shared = Router()
+    @Published var askingAppID: String?
+}
