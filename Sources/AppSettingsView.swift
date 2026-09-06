@@ -68,7 +68,7 @@ struct AppSettingsView: View {
 
                 Section("Friction") {
                     Stepper("Pause: \(current.pauseSeconds)s", value: app.pauseSeconds, in: 0...60)
-                    Stepper("Cooldown: \(current.cooldownMinutes) min", value: app.cooldownMinutes, in: 0...240, step: 5)
+                    Stepper("Cooldown: \(current.cooldownMinutes) min", value: app.cooldownMinutes, in: 1...240, step: 5)
                     Stepper("Annoyed from open #\(current.annoyedAt)", value: app.annoyedAt, in: 1...50)
                     Stepper("Brutal from open #\(current.brutalAt)", value: app.brutalAt, in: 1...50)
                     Stepper("Average session: \(current.sessionMinutes) min", value: app.sessionMinutes, in: 1...120)
