@@ -38,17 +38,21 @@ sell.
 
 ## 2. Interception flow
 
-Really? cannot observe other apps launching. It ships an App Intent, **Check In**,
-with one parameter: the gated app. The user creates one Personal Automation in
-Shortcuts per gated app:
+Really? cannot observe other apps launching. It ships two App Intents. **Check In**
+runs silently and returns the text `ask` or `skip`. **Ask** opens Really? on the
+question screen. The user creates one Personal Automation in Shortcuts per gated
+app (an intent cannot decide at runtime whether to open the app, so the
+automation needs an If):
 
-> When *Instagram* is opened → Run immediately, notify off → Run "Check In" (Instagram)
+> When *Instagram* is opened → Run immediately, notify off →
+> Check In (Instagram) → If Result is `ask` → Ask (Instagram)
 
-Intent behaviour:
+Check In behaviour:
 
-1. Look up the app's cooldown end time in `Store`.
-2. Inside cooldown: return silently. The user is already in the app.
-3. Outside cooldown: open Really? via `really://ask?app=<id>` on the question screen.
+1. Record the time as the app's last check-in (proves the automation fired).
+2. App disabled or inside cooldown: return `skip`. The user is already in the app.
+3. Otherwise return `ask`, and the automation runs Ask, which opens Really? on
+   the question screen for that app.
 
 Question screen behaviour:
 
@@ -67,8 +71,9 @@ scheme.
 
 Setup screen per app: numbered steps to create the automation, exact option
 names, and an "Open Shortcuts" button (`shortcuts://`). Really? cannot verify the
-automation exists; the setup screen shows "last check-in: never / <time>" so the
-user can confirm it fired.
+automation exists; the setup screen shows "last check-in: never / <time>"
+(written by Check In) so the user can confirm it fired. No custom URL scheme is
+needed.
 
 Interception seam: the question screen receives an `AppTarget` and a
 `letThrough: () -> Void` action. Today that action opens a URL. The Screen Time
