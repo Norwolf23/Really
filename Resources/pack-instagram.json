@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Are you here to just doomscroll again?",
+    "What exactly are you hoping to find in there?",
+    "You checked this twenty minutes ago. Anything change?",
+    "Is this a decision or a reflex?",
+    "Name one thing you'll remember from this in an hour.",
+    "Are you bored, or just avoiding something?",
+    "Did someone ask for you, or did your thumb?",
+    "Quick one: what were you doing before this?",
+    "Stories of people you don't talk to. Really?",
+    "You could just... not."
+  ],
+  "annoyed": [
+    "Again? It's been fifteen minutes.",
+    "Third time today. The feed hasn't missed you.",
+    "Really? What did the last visit do for you?",
+    "This is the one where you say you'll only check one thing.",
+    "You're not looking for anything. You're looking away from something.",
+    "Same reels, same faces, same feeling after. Go on then.",
+    "Your attention is being sold. You're the discount.",
+    "Someone posted a photo of lunch. That's what's waiting.",
+    "You've done this dance today already. Twice.",
+    "Be honest. This is a nervous tic with a logo."
+  ],
+  "brutal": [
+    "Really. Again. You're better than this, allegedly.",
+    "Sixth time. The algorithm knows you better than your friends do.",
+    "At this point the app is opening you.",
+    "Congratulations, you've become the engagement metric.",
+    "There is nothing in there. There was nothing last time either.",
+    "Your day is being eaten thirty seconds at a time and you're holding the spoon.",
+    "Imagine explaining today's screen time to yourself at twenty.",
+    "Go ahead. Add another forty minutes you won't remember.",
+    "You already know the answer. You just want permission.",
+    "No, seriously. Really?"
+  ]
+}

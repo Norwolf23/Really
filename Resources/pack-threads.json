@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Are you here because something's actually happening, or because Instagram nudged you?",
+    "Do you know anyone who's actually posting on here right now?",
+    "Is this a real reason to open the sibling app?",
+    "Quick check: who are you hoping to find in here?",
+    "Was this a decision, or did the icon just happen to be there?",
+    "Name the last post here that mattered to you.",
+    "You could just open the app this one actually belongs to.",
+    "Is there anyone waiting on a reply from you in here?",
+    "What were you doing before this quiet little app called you over?",
+    "Is this curiosity, or just habit looking for a new home?"
+  ],
+  "annoyed": [
+    "Again? Nobody posted anything new since the last time you checked.",
+    "Third time today. This app is still mostly you and the algorithm.",
+    "You said you'd just check once. The feed is the same three people.",
+    "This is a habit now. The habit doesn't need company to keep going.",
+    "You're scrolling a room that's mostly empty and you know it.",
+    "Same quiet feed, same nothing happening. Go on then.",
+    "You're not catching up on anything. There's nothing to catch up on.",
+    "The app exists mostly so you have somewhere else to check.",
+    "You keep opening this like it's going to be different from ten minutes ago.",
+    "You already know nobody you actually know is in here."
+  ],
+  "brutal": [
+    "Really. Again. You've checked Instagram's quiet cousin more than your actual friends have checked on you.",
+    "There is nobody here. There has never really been anybody here.",
+    "You are keeping a near-empty room open just in case.",
+    "Congratulations, you've found a new place to waste time with even less in it.",
+    "This app exists because the other one told you to install it. That's the whole relationship.",
+    "Imagine explaining why you check an app with nothing in it more than once a day.",
+    "Go ahead. Refresh the empty room again.",
+    "You already know this feed won't change. Check it anyway.",
+    "This is what nobody being there looks like. It looks like right now.",
+    "No, seriously. Really?"
+  ]
+}

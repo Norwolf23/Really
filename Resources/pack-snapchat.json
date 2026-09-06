@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Is this for the streak, or for the person?",
+    "What are you actually checking, the map or a message?",
+    "Did someone snap you, or are you just here on a reflex?",
+    "Quick check: would you miss this conversation if the streak ended?",
+    "Is this a real reason to open the app, or just the number?",
+    "Name the last snap that actually meant something.",
+    "You could just text them instead.",
+    "Was this curiosity about the map, or something else?",
+    "Is there anyone waiting on you in here, really?",
+    "What were you doing before the streak reminded you it existed?"
+  ],
+  "annoyed": [
+    "Again? The streak already knows you're anxious about it.",
+    "Third time today. The map hasn't moved much since the last check.",
+    "You said you'd just keep the streak alive. Now you're reading everyone's story too.",
+    "This is a habit now. The habit is scared of a number resetting.",
+    "Nobody on the map needs watching this closely.",
+    "Same streak, same panic, same nothing new. Go on then.",
+    "You're not talking to anyone. You're maintaining a scoreboard.",
+    "The streak isn't a friendship. It's a chore with a flame icon.",
+    "You keep checking the map like something's going to happen on it.",
+    "You already refreshed this an hour ago. The map still hasn't moved."
+  ],
+  "brutal": [
+    "Really. Again. You're keeping a streak alive with someone you haven't actually talked to in weeks.",
+    "The map is not a relationship. Stop treating it like one.",
+    "You have protected this streak harder than you protect your own evenings.",
+    "Congratulations, your friendship is now a number with a fire next to it.",
+    "There is nothing on the map worth this many checks.",
+    "Imagine explaining the streak anxiety to someone who's never used this app.",
+    "Go ahead. Check the map again. It's still just dots.",
+    "You already know the streak means nothing the day you both stop caring. Keep watering it anyway.",
+    "This is what the map looks like from the outside. It looks like nothing happening.",
+    "No, seriously. Really?"
+  ]
+}
