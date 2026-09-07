@@ -53,4 +53,6 @@ struct ShieldState: Codable, Equatable {
     var lastQuestion: [String: String] = [:]
     /// The app the configuration extension last rendered; the action extension can't read app identity itself.
     var lastShown: Shown? = nil
+    /// Diagnostic: which button the action extension last handled.
+    var lastAction: String? = nil
 }
