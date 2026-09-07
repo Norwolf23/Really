@@ -34,5 +34,11 @@
     "Go ahead. Lose another hour to fifteen-second nothing.",
     "You already know how this ends. Scrolling, then regret, then more scrolling.",
     "No, seriously. Really?"
+  ],
+  "reasons": [
+    "Just one video",
+    "Bored",
+    "Avoiding something",
+    "No reason"
   ]
 }

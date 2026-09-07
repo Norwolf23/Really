@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-/// All app state. Two JSON files, rewritten whole on every change.
+/// All app state. Three JSON files, rewritten whole on every change.
 /// ponytail: fine for a few events a day; move to SwiftData if events.json passes a few MB.
 @MainActor
 final class Store: ObservableObject {
@@ -11,9 +11,11 @@ final class Store: ObservableObject {
 
     @Published var apps: [GatedApp] { didSet { save() } }
     @Published var events: [CheckIn] { didSet { save() } }
+    @Published var settings: Settings { didSet { save() } }
 
     private let appsURL: URL
     private let eventsURL: URL
+    private let settingsURL: URL
 
     nonisolated static var defaultDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -28,8 +30,10 @@ final class Store: ObservableObject {
         }
         appsURL = directory.appendingPathComponent("apps.json")
         eventsURL = directory.appendingPathComponent("events.json")
+        settingsURL = directory.appendingPathComponent("settings.json")
         apps = Store.load([GatedApp].self, from: appsURL) ?? []
         events = Store.load([CheckIn].self, from: eventsURL) ?? []
+        settings = Store.load(Settings.self, from: settingsURL) ?? Settings()
     }
 
     func app(_ id: String) -> GatedApp? {
@@ -48,14 +52,14 @@ final class Store: ObservableObject {
         apps.removeAll { $0.id == id }
     }
 
-    func record(_ decision: Decision, for appID: String, questionID: String?, now: Date = .now) {
+    func record(_ decision: Decision, for appID: String, questionID: String?, reason: String? = nil, now: Date = .now) {
         guard var app = app(appID) else { return }
         app.lastQuestionID = questionID
         if decision == .proceed {
             app.cooldownUntil = now.addingTimeInterval(TimeInterval(app.cooldownMinutes * 60))
         }
         update(app)
-        events.append(CheckIn(appID: appID, at: now, decision: decision))
+        events.append(CheckIn(appID: appID, at: now, decision: decision, reason: reason))
     }
 
     func markCheckIn(_ appID: String, now: Date = .now) {
@@ -74,6 +78,11 @@ final class Store: ObservableObject {
             try Store.write(events, to: eventsURL)
         } catch {
             Store.log.error("save events.json failed: \(error.localizedDescription, privacy: .public)")
+        }
+        do {
+            try Store.write(settings, to: settingsURL)
+        } catch {
+            Store.log.error("save settings.json failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 

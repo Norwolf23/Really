@@ -39,6 +39,23 @@ struct StatsView: View {
                     .frame(height: 180)
                     .padding(.vertical, 8)
                 }
+                Section("Excuses, last 7 days") {
+                    let counts = Logic.reasonCounts(events: store.events, since: Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: now)) ?? now)
+                    if counts.isEmpty {
+                        Text("None yet.").foregroundStyle(.secondary)
+                    } else {
+                        Text("Leading excuse: \(counts[0].reason)").font(.subheadline.bold())
+                        ForEach(counts) { row($0.reason, $0.count) }
+                    }
+                }
+                if let hour = Logic.worstHour(events: store.events) {
+                    Section("Worst hour") {
+                        Text("Most likely to cave: \(String(format: "%02d:00–%02d:00", hour, (hour + 1) % 24))")
+                    }
+                }
+                Section("Log") {
+                    NavigationLink("All check-ins") { LogView() }
+                }
                 Section("Per app") {
                     ForEach(store.apps) { app in
                         let mine = today.filter { $0.appID == app.id }
