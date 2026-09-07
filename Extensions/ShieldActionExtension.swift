@@ -7,7 +7,9 @@ final class ShieldActionExtension: ShieldActionDelegate {
     override func handle(action: ShieldAction, for token: ApplicationToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
         let store = Store()
         // ponytail: Application(token:) has nil name/bundle id in this extension; the configuration extension just wrote who it showed.
-        let shown = store.state.lastShown ?? Shown(id: "unknown", name: "that app")
+        let shared = UserDefaults(suiteName: Store.group)
+        let shown = Shown(id: shared?.string(forKey: "lastShownID") ?? "unknown", name: shared?.string(forKey: "lastShownName") ?? "that app")
+        store.state.lastShown = shown
         store.state.lastAction = "\(action == .primaryButtonPressed ? "Yea" : "Nope") \(Date.now.formatted(date: .omitted, time: .shortened))"
         // ponytail: no second round. iOS ignores .defer while the app is in the foreground, so a shield gets one question.
         switch Logic.shieldStep(primary: action == .primaryButtonPressed) {
@@ -19,8 +21,7 @@ final class ShieldActionExtension: ShieldActionDelegate {
             let until = Date.now.addingTimeInterval(Double(store.settings.cooldownMinutes) * 60)
             store.state.cooldowns[shown.id] = until
             ManagedSettingsStore().shield.applications?.remove(token)
-            // .none leaves the shield frozen on screen (seen on iOS 26.6), so close; the next tap on the app opens it unshielded.
-            completionHandler(.close)
+            completionHandler(.none) // shield is gone, so the app is simply there. If this ever freezes on a device, use .close.
             // Best effort, after the handler: bring the question back later. DeviceActivity calls have hung this
             // extension before, so nothing the user sees depends on it. Apple's minimum interval is 15 min.
             let center = DeviceActivityCenter()
