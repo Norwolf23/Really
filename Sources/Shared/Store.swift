@@ -52,7 +52,9 @@ final class Store: ObservableObject {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .secondsSince1970
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            try encoder.encode(value).write(to: url, options: .atomic)
+            // Not atomic: the shield extensions' sandbox denies the unlink an atomic write needs inside the App Group.
+            // Files are a few KB and one process writes at a time, so a torn read is theoretical.
+            try encoder.encode(value).write(to: url)
         } catch {
             Store.log.error("save \(url.lastPathComponent, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
         }
