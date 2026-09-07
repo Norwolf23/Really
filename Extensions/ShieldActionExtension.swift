@@ -8,6 +8,7 @@ final class ShieldActionExtension: ShieldActionDelegate {
         let store = Store()
         // ponytail: Application(token:) has nil name/bundle id in this extension; the configuration extension just wrote who it showed.
         let shown = store.state.lastShown ?? Shown(id: "unknown", name: "that app")
+        store.state.lastAction = "\(action == .primaryButtonPressed ? "Yea" : "Nope") \(Date.now.formatted(date: .omitted, time: .shortened))"
         // ponytail: no second round. iOS ignores .defer while the app is in the foreground, so a shield gets one question.
         switch Logic.shieldStep(primary: action == .primaryButtonPressed) {
         case .close: // Yea, I am
@@ -18,7 +19,10 @@ final class ShieldActionExtension: ShieldActionDelegate {
             let until = Date.now.addingTimeInterval(Double(store.settings.cooldownMinutes) * 60)
             store.state.cooldowns[shown.id] = until
             ManagedSettingsStore().shield.applications?.remove(token)
-            // Bring the question back later. Apple's minimum interval is 15 min.
+            // .none leaves the shield frozen on screen (seen on iOS 26.6), so close; the next tap on the app opens it unshielded.
+            completionHandler(.close)
+            // Best effort, after the handler: bring the question back later. DeviceActivity calls have hung this
+            // extension before, so nothing the user sees depends on it. Apple's minimum interval is 15 min.
             let center = DeviceActivityCenter()
             let name = DeviceActivityName("cooldown")
             let parts: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
@@ -28,8 +32,6 @@ final class ShieldActionExtension: ShieldActionDelegate {
                 intervalStart: calendar.dateComponents(parts, from: .now),
                 intervalEnd: calendar.dateComponents(parts, from: until),
                 repeats: false))
-            // .none leaves the shield frozen on screen (seen on iOS 26.6), so close; the next tap on the app opens it unshielded.
-            completionHandler(.close)
         }
     }
 }
