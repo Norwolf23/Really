@@ -97,11 +97,9 @@ final class LogicTests: XCTestCase {
 
     // MARK: shield rounds
 
-    func testShieldStepRounds() {
-        XCTAssertEqual(Logic.shieldStep(round: 1, primary: true), .through)   // Nah, making a new post
-        XCTAssertEqual(Logic.shieldStep(round: 1, primary: false), .askAgain) // Yea
-        XCTAssertEqual(Logic.shieldStep(round: 2, primary: true), .close)     // No
-        XCTAssertEqual(Logic.shieldStep(round: 2, primary: false), .through)  // Yes
+    func testShieldStep() {
+        XCTAssertEqual(Logic.shieldStep(primary: true), .close)     // Yea, I am
+        XCTAssertEqual(Logic.shieldStep(primary: false), .through)  // Nope, I've got a reason to be here
     }
 
     // MARK: cooldowns
