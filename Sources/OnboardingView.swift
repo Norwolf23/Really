@@ -15,10 +15,10 @@ struct OnboardingView: View {
             Group {
                 switch step {
                 case 0:
-                    page(title: "Really?", body: "You open apps you don't mean to. This asks first.", button: "Go on")
+                    page(title: "Really?", body: "Instagram opens itself. Your thumb does it before you do.", button: "Go on")
                 case 1:
-                    page(title: "How it works",
-                         body: "You pick the apps.\niOS puts Really? in front of them.\nAnswer, or don't.",
+                    page(title: "This blocks nothing.",
+                         body: "It just asks, so you notice what you're doing.\nThen you choose. Go in, or don't.",
                          button: "Fine")
                 case 2:
                     page(title: "You downloaded an app to stop using apps.", body: "Really?", button: "Yes, really.")

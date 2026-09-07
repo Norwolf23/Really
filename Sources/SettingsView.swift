@@ -19,13 +19,13 @@ struct SettingsView: View {
                     Text("Counts each app's opens today against the thresholds below.")
                 }
                 Section {
-                    Stepper("Cooldown: \(store.settings.cooldownMinutes) min", value: $store.settings.cooldownMinutes, in: 15...240, step: 15)
+                    Stepper("Ask again after: \(store.settings.cooldownMinutes) min", value: $store.settings.cooldownMinutes, in: 15...240, step: 15)
                     Stepper("Annoyed from open #\(store.settings.annoyedAt)", value: $store.settings.annoyedAt, in: 1...50)
                     Stepper("Brutal from open #\(store.settings.brutalAt)", value: $store.settings.brutalAt, in: 1...50)
                 } header: {
                     Text("Friction")
                 } footer: {
-                    Text("After Yes, really the app stays open for the cooldown, then the shield comes back.")
+                    Text("Once you go through, the question stays away this long. 15 min is the shortest iOS allows.")
                 }
                 Section("Intro") {
                     Button("Replay intro") { store.settings.hasOnboarded = false }
