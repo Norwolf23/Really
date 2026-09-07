@@ -12,7 +12,7 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
         return ShieldConfiguration(
             backgroundBlurStyle: .systemUltraThinMaterialDark,
             backgroundColor: .black,
-            icon: nil,
+            icon: UIImage(named: "shield-icon"),
             title: ShieldConfiguration.Label(text: "REALLY?", color: .gray),
             subtitle: ShieldConfiguration.Label(text: "Are you avoiding something again?", color: .white),
             primaryButtonLabel: ShieldConfiguration.Label(text: "Yea, I am", color: .black),
