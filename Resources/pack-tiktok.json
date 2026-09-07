@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Are you here for one video or the whole feed?",
+    "The For You page already knows you're here. Does that bother you?",
+    "What was the last video actually about?",
+    "Is this three minutes or is this an hour?",
+    "Did you open this on purpose, or did your thumb decide?",
+    "What are you hoping the next video does for you?",
+    "You could scroll past this thought instead of the app.",
+    "Name the last thing you learned in here. Take your time.",
+    "Is this rest, or just motion?",
+    "Quick check: how many videos is enough tonight?"
+  ],
+  "annoyed": [
+    "Again? The For You page just refilled and so did you.",
+    "Third time today. The videos are getting shorter and so is your patience.",
+    "You said you'd watch one. That was forty videos ago.",
+    "Nobody's making you watch the next one. You just do it anyway.",
+    "Your thumb is doing the scrolling. You're just along for it.",
+    "Nothing in the last ten videos mattered. Onto the eleventh.",
+    "You keep saying next one, then next one.",
+    "The app doesn't care what you find. It just wants you scrolling.",
+    "Same feed, same rhythm, same blank stare after. Go on then.",
+    "You're not watching videos anymore. You're being watched watching them."
+  ],
+  "brutal": [
+    "Really. Again. The For You page is basically your diary now.",
+    "You've watched more strangers dance today than you've spoken to people.",
+    "There is no bottom to this feed and you keep digging anyway.",
+    "You've refreshed this feed more times than you've stood up today.",
+    "An hour gone and you couldn't name a single video.",
+    "Congratulations, you're an unpaid product tester for an algorithm.",
+    "Imagine explaining this feed to someone who actually knows you.",
+    "Go ahead. Lose another hour to fifteen-second nothing.",
+    "You already know how this ends. Scrolling, then regret, then more scrolling.",
+    "No, seriously. Really?"
+  ]
+}

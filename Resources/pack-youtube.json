@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Just one video, or is that never actually true?",
+    "What are you here to watch, specifically?",
+    "Is this the video you opened the app for?",
+    "How many recommended videos will you fall for tonight?",
+    "Did you come here with a question, or just time to kill?",
+    "Quick check: is this the last tab before bed, or the first of many?",
+    "You could close this and actually finish the thing you were doing.",
+    "Name the video that brought you back this time.",
+    "Is autoplay doing the deciding here?",
+    "Was this five minutes planned, or just happening to you?"
+  ],
+  "annoyed": [
+    "Again? That one video became six.",
+    "Third time today. Autoplay is basically driving now.",
+    "You said one video. That was an hour ago.",
+    "The next video is already loading. You didn't ask it to.",
+    "You clicked the thumbnail. The thumbnail won.",
+    "Nothing in the last four videos was worth the time. The fifth is loading anyway.",
+    "You keep meaning to close the tab after this one. This one never ends.",
+    "Same rabbit hole, different day. Go on then.",
+    "The next video queued itself before you decided anything.",
+    "You're not watching anymore. You're being played, next up."
+  ],
+  "brutal": [
+    "One video was a lie you told yourself an hour ago.",
+    "You've let autoplay make more decisions today than you have.",
+    "There is always a next video. That is the whole business model.",
+    "Your evening is a related-videos sidebar now.",
+    "Congratulations, you watched a stranger's whole life update in real time.",
+    "Imagine if you'd finished anything else with this attention.",
+    "Go ahead. Let the next unskippable hour start itself.",
+    "You already know the video won't matter tomorrow. Press play anyway.",
+    "This is what one video looks like from the outside. It looks like tonight.",
+    "No, seriously. Really?"
+  ]
+}
