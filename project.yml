@@ -81,7 +81,7 @@ targets:
       path: Extensions/ShieldAction-Info.plist
       properties:
         NSExtension:
-          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-action-service
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldActionExtension
     settings:
       base:
