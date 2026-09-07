@@ -8,16 +8,12 @@ final class ShieldActionExtension: ShieldActionDelegate {
         let store = Store()
         // ponytail: Application(token:) has nil name/bundle id in this extension; the configuration extension just wrote who it showed.
         let shown = store.state.lastShown ?? Shown(id: "unknown", name: "that app")
-        switch Logic.shieldStep(round: store.state.round, primary: action == .primaryButtonPressed) {
-        case .askAgain:
-            store.state.round = 2
-            completionHandler(.defer) // system asks the configuration extension again → round 2 text
-        case .close:
-            store.state.round = 1
+        // ponytail: no second round. iOS ignores .defer while the app is in the foreground, so a shield gets one question.
+        switch Logic.shieldStep(primary: action == .primaryButtonPressed) {
+        case .close: // Yea, I am
             store.record(.no, app: shown.id, name: shown.name)
             completionHandler(.close)
-        case .through:
-            store.state.round = 1
+        case .through: // Nope, I've got a reason to be here
             store.record(.proceed, app: shown.id, name: shown.name)
             let until = Date.now.addingTimeInterval(Double(store.settings.cooldownMinutes) * 60)
             store.state.cooldowns[shown.id] = until
