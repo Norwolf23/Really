@@ -28,8 +28,13 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(Catalog.sessionMinutes(for: "com.example.nope"), 10)
     }
 
+    func testTokenIDRoundTripsGarbageToNil() {
+        XCTAssertNil(TokenID.token("not base64!"))
+        XCTAssertNil(TokenID.token(Data("{}".utf8).base64EncodedString()))
+    }
+
     func testCheckInRoundTrips() throws {
-        let event = CheckIn(appID: "com.burbn.instagram", appName: "Instagram", at: Date(timeIntervalSince1970: 1_800_000_000), decision: .no)
+        let event = CheckIn(appID: "com.burbn.instagram", at: Date(timeIntervalSince1970: 1_800_000_000), decision: .no)
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .secondsSince1970
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .secondsSince1970
         let back = try decoder.decode(CheckIn.self, from: encoder.encode(event))
@@ -52,11 +57,11 @@ final class ModelsTests: XCTestCase {
     }
 
     func testShieldStateDefaultsAndRoundTrip() throws {
-        XCTAssertEqual(ShieldState(), ShieldState(cooldowns: [:], lastQuestion: [:], lastShown: nil))
+        XCTAssertEqual(ShieldState(), ShieldState(cooldowns: [:], lastQuestion: [:], lastAction: nil))
         var state = ShieldState()
         state.cooldowns["com.burbn.instagram"] = Date(timeIntervalSince1970: 1_800_000_000)
         state.lastQuestion["com.burbn.instagram"] = "pack-instagram.normal.0"
-        state.lastShown = Shown(id: "com.burbn.instagram", name: "Instagram", at: Date(timeIntervalSince1970: 1_800_000_000))
+        state.lastAction = "Nope 9:41"
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .secondsSince1970
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .secondsSince1970
         XCTAssertEqual(try decoder.decode(ShieldState.self, from: encoder.encode(state)), state)

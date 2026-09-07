@@ -8,7 +8,7 @@ final class LogicTests: XCTestCase {
     let tt = "com.zhiliaoapp.musically"
 
     func event(_ appID: String, minutesAgo: Double, _ decision: Decision = .no) -> CheckIn {
-        CheckIn(appID: appID, appName: appID, at: now.addingTimeInterval(-minutesAgo * 60), decision: decision)
+        CheckIn(appID: appID, at: now.addingTimeInterval(-minutesAgo * 60), decision: decision)
     }
 
     // MARK: open number
@@ -114,7 +114,7 @@ final class LogicTests: XCTestCase {
     // MARK: streak
 
     func daysAgo(_ d: Int, _ decision: Decision = .no) -> CheckIn {
-        CheckIn(appID: ig, appName: "Instagram", at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision)
+        CheckIn(appID: ig, at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision)
     }
 
     func testStreakZeroWithNoEvents() {
@@ -166,7 +166,7 @@ final class LogicTests: XCTestCase {
     // MARK: worst hour
 
     func at(hour: Int, _ decision: Decision = .proceed) -> CheckIn {
-        CheckIn(appID: ig, appName: "Instagram", at: cal.date(bySettingHour: hour, minute: 0, second: 0, of: now)!, decision: decision)
+        CheckIn(appID: ig, at: cal.date(bySettingHour: hour, minute: 0, second: 0, of: now)!, decision: decision)
     }
 
     func testWorstHourNilWhenNoProceeds() {
@@ -187,7 +187,7 @@ final class LogicTests: XCTestCase {
 
     func testGroupedByDayNewestFirst() {
         let today10 = at(hour: 10), today11 = at(hour: 11)
-        let yesterday = CheckIn(appID: ig, appName: "Instagram", at: cal.date(byAdding: .day, value: -1, to: at(hour: 9).at)!, decision: .no)
+        let yesterday = CheckIn(appID: ig, at: cal.date(byAdding: .day, value: -1, to: at(hour: 9).at)!, decision: .no)
         let groups = Logic.groupedByDay(events: [yesterday, today10, today11], calendar: cal)
         XCTAssertEqual(groups.count, 2)
         XCTAssertEqual(groups[0].day, cal.startOfDay(for: now))

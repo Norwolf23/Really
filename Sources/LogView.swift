@@ -5,7 +5,7 @@ struct LogView: View {
     @State private var appFilter: String?
 
     var body: some View {
-        let names = Dictionary(store.events.map { ($0.appID, $0.appName) }, uniquingKeysWith: { _, latest in latest })
+        let ids = Set(store.events.map(\.appID)).sorted()
         let events = store.events.filter { appFilter == nil || $0.appID == appFilter }
         let groups = Logic.groupedByDay(events: events)
         List {
@@ -16,7 +16,8 @@ struct LogView: View {
                             Text(event.at.formatted(date: .omitted, time: .shortened))
                                 .monospacedDigit()
                                 .foregroundStyle(.secondary)
-                            Text("\(event.appName) · \(event.decision == .no ? "Said no" : "Went through")")
+                            AppLabel(id: event.appID)
+                            Text(event.decision == .no ? "Said no" : "Went through").foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -31,8 +32,8 @@ struct LogView: View {
         .toolbar {
             Menu {
                 Button("All apps") { appFilter = nil }
-                ForEach(names.keys.sorted(), id: \.self) { id in
-                    Button(names[id] ?? id) { appFilter = id }
+                ForEach(ids, id: \.self) { id in
+                    Button { appFilter = id } label: { AppLabel(id: id) }
                 }
             } label: {
                 Image(systemName: "line.3.horizontal.decrease.circle")

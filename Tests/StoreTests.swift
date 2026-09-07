@@ -23,10 +23,9 @@ final class StoreTests: XCTestCase {
     func testRecordAppendsEvent() {
         let store = Store(directory: dir)
         let now = Date(timeIntervalSince1970: 1_800_000_000)
-        store.record(.proceed, app: ig, name: "Instagram", now: now)
-        store.record(.no, app: ig, name: "Instagram")
+        store.record(.proceed, app: ig, now: now)
+        store.record(.no, app: ig)
         XCTAssertEqual(store.events.map(\.decision), [.proceed, .no])
-        XCTAssertEqual(store.events[0].appName, "Instagram")
         XCTAssertEqual(store.events[0].at, now)
     }
 
@@ -34,14 +33,13 @@ final class StoreTests: XCTestCase {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         do {
             let store = Store(directory: dir)
-            store.record(.no, app: ig, name: "Instagram", now: now)
+            store.record(.no, app: ig, now: now)
             store.settings.meanness = .annoyed
             store.settings.escalates = false
             store.settings.hasOnboarded = true
             store.settings.cooldownMinutes = 45
             store.state.cooldowns[ig] = now
             store.state.lastQuestion[ig] = "q1"
-            store.state.lastShown = Shown(id: ig, name: "Instagram", at: now)
         }
         let reloaded = Store(directory: dir)
         XCTAssertEqual(reloaded.events.count, 1)
@@ -53,7 +51,6 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(reloaded.settings.cooldownMinutes, 45)
         XCTAssertEqual(reloaded.state.cooldowns[ig]?.timeIntervalSince1970 ?? 0, now.timeIntervalSince1970, accuracy: 1)
         XCTAssertEqual(reloaded.state.lastQuestion[ig], "q1")
-        XCTAssertEqual(reloaded.state.lastShown?.name, "Instagram")
     }
 
     /// The extensions write events.json and state.json while the app is backgrounded; reload() picks them up.
@@ -61,7 +58,7 @@ final class StoreTests: XCTestCase {
         let app = Store(directory: dir)
         app.settings.hasOnboarded = true
         let ext = Store(directory: dir)
-        ext.record(.proceed, app: ig, name: "Instagram")
+        ext.record(.proceed, app: ig)
         ext.state.cooldowns[ig] = Date(timeIntervalSince1970: 1_800_000_000)
         XCTAssertTrue(app.events.isEmpty)
         app.reload()
