@@ -13,6 +13,7 @@ struct AskView: View {
     @State private var breathing = false
     @State private var saidNo = false
     @State private var goodCallLine = GoodCallView.lines.randomElement() ?? ""
+    @State private var choosingReason = false
 
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -34,12 +35,23 @@ struct AskView: View {
         .onReceive(ticker) { _ in
             if !saidNo && remaining > 0 { remaining -= 1 }
         }
+        .sheet(isPresented: $choosingReason) {
+            ReasonSheet(reasons: Packs.reasons(for: appID)) { reason in
+                guard choosingReason else { return }
+                choosingReason = false
+                proceed(reason: reason)
+            }
+        }
     }
 
     private func start() {
         guard let app = store.app(appID) else { return }
         let openNumber = Logic.openNumberToday(events: store.events, appID: appID, now: .now)
-        let tier = Logic.tier(openNumber: openNumber, annoyedAt: app.annoyedAt, brutalAt: app.brutalAt)
+        let tier = Logic.effectiveTier(base: store.settings.meanness,
+                                       openNumber: openNumber,
+                                       annoyedAt: app.annoyedAt,
+                                       brutalAt: app.brutalAt,
+                                       escalates: store.settings.escalates)
         var rng = SystemRandomNumberGenerator()
         question = Logic.pickQuestion(for: app, pack: Packs.questions(for: appID), tier: tier, using: &rng)
         total = max(app.pauseSeconds, 1)
@@ -66,7 +78,7 @@ struct AskView: View {
             Spacer()
             VStack(spacing: 14) {
                 Button {
-                    proceed(app)
+                    choosingReason = true
                 } label: {
                     Text(remaining > 0 ? "Continue in \(remaining)" : "Continue to \(app.name)")
                         .frame(maxWidth: .infinity)
@@ -107,8 +119,9 @@ struct AskView: View {
         .scaleEffect(breathing ? 1.06 : 0.94)
     }
 
-    private func proceed(_ app: GatedApp) {
-        store.record(.proceed, for: appID, questionID: question?.id)
+    private func proceed(reason: String) {
+        guard let app = store.app(appID) else { return }
+        store.record(.proceed, for: appID, questionID: question?.id, reason: reason)
         if let url = URL(string: app.urlScheme) { openURL(url) }
         router.askingAppID = nil
     }

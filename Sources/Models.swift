@@ -52,4 +52,11 @@ struct CheckIn: Codable, Identifiable, Equatable {
     var appID: String
     var at: Date
     var decision: Decision
+    var reason: String? = nil
+}
+
+struct Settings: Codable, Equatable {
+    var hasOnboarded = false
+    var meanness = Tier.normal
+    var escalates = true
 }

@@ -74,4 +74,46 @@ enum Logic {
                             nos: that.filter { $0.decision == .no }.count)
         }
     }
+
+    static func effectiveTier(base: Tier, openNumber: Int, annoyedAt: Int, brutalAt: Int, escalates: Bool) -> Tier {
+        guard escalates else { return base }
+        return max(base, tier(openNumber: openNumber, annoyedAt: annoyedAt, brutalAt: brutalAt))
+    }
+
+    struct ReasonCount: Identifiable {
+        let reason: String
+        let count: Int
+        var id: String { reason }
+    }
+
+    static func reasonCounts(events: [CheckIn], since: Date) -> [ReasonCount] {
+        var counts: [String: Int] = [:]
+        for event in events where event.decision == .proceed && event.at >= since {
+            if let reason = event.reason, !reason.isEmpty { counts[reason, default: 0] += 1 }
+        }
+        return counts.map { ReasonCount(reason: $0.key, count: $0.value) }
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.reason < $1.reason }
+    }
+
+    static func worstHour(events: [CheckIn], calendar: Calendar = .current) -> Int? {
+        var counts = [Int](repeating: 0, count: 24)
+        for event in events where event.decision == .proceed {
+            counts[calendar.component(.hour, from: event.at)] += 1
+        }
+        guard let best = counts.max(), best > 0 else { return nil }
+        return counts.firstIndex(of: best)
+    }
+
+    struct DayGroup: Identifiable {
+        let day: Date
+        let events: [CheckIn]
+        var id: Date { day }
+    }
+
+    static func groupedByDay(events: [CheckIn], calendar: Calendar = .current) -> [DayGroup] {
+        let groups = Dictionary(grouping: events) { calendar.startOfDay(for: $0.at) }
+        return groups.keys.sorted(by: >).map { day in
+            DayGroup(day: day, events: (groups[day] ?? []).sorted { $0.at > $1.at })
+        }
+    }
 }

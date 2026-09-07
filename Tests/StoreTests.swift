@@ -82,4 +82,27 @@ final class StoreTests: XCTestCase {
         store.markCheckIn("instagram", now: now)
         XCTAssertEqual(store.app("instagram")?.lastCheckIn, now)
     }
+
+    func testSettingsPersistAcrossInstances() {
+        do {
+            let store = Store(directory: dir)
+            XCTAssertEqual(store.settings, Settings())
+            store.settings.meanness = .annoyed
+            store.settings.escalates = false
+            store.settings.hasOnboarded = true
+        }
+        let reloaded = Store(directory: dir)
+        XCTAssertEqual(reloaded.settings.meanness, .annoyed)
+        XCTAssertFalse(reloaded.settings.escalates)
+        XCTAssertTrue(reloaded.settings.hasOnboarded)
+    }
+
+    func testRecordStoresReason() {
+        let store = Store(directory: dir)
+        store.update(Catalog.gatedApp(Catalog.entries[0]))
+        store.record(.proceed, for: "instagram", questionID: nil, reason: "Bored")
+        store.record(.no, for: "instagram", questionID: nil)
+        XCTAssertEqual(store.events[0].reason, "Bored")
+        XCTAssertNil(store.events[1].reason)
+    }
 }

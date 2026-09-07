@@ -34,5 +34,11 @@
     "Go ahead. Another half hour you'll never get back.",
     "This is what \"later\" looks like. It's still now.",
     "No, seriously. Really?"
+  ],
+  "reasons": [
+    "Checking one thing",
+    "Bored",
+    "Avoiding something",
+    "No reason"
   ]
 }

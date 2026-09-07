@@ -17,16 +17,25 @@ struct ReallyApp: App {
 
 struct RootView: View {
     @EnvironmentObject var router: Router
+    @EnvironmentObject var store: Store
 
     var body: some View {
-        TabView {
-            AppsView()
-                .tabItem { Label("Apps", systemImage: "app.badge") }
-            StatsView()
-                .tabItem { Label("Stats", systemImage: "chart.bar") }
+        Group {
+            TabView {
+                AppsView()
+                    .tabItem { Label("Apps", systemImage: "app.badge") }
+                StatsView()
+                    .tabItem { Label("Stats", systemImage: "chart.bar") }
+                SettingsView()
+                    .tabItem { Label("Settings", systemImage: "gearshape") }
+            }
+            .fullScreenCover(item: asking) { target in
+                AskView(appID: target.id)
+            }
         }
-        .fullScreenCover(item: asking) { target in
-            AskView(appID: target.id)
+        // Both covers effectively chain on the TabView (Group is transparent). Works on iOS 17; onboarding finishes before any automation can exist, so they never present together.
+        .fullScreenCover(isPresented: onboarding) {
+            OnboardingView()
         }
     }
 
@@ -34,6 +43,13 @@ struct RootView: View {
         Binding(
             get: { router.askingAppID.map { AskTarget(id: $0) } },
             set: { router.askingAppID = $0?.id }
+        )
+    }
+
+    private var onboarding: Binding<Bool> {
+        Binding(
+            get: { !store.settings.hasOnboarded },
+            set: { if !$0 { store.settings.hasOnboarded = true } }
         )
     }
 }
