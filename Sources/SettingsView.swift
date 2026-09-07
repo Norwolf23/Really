@@ -1,3 +1,4 @@
+import FamilyControls
 import SwiftUI
 
 struct SettingsView: View {
@@ -32,6 +33,9 @@ struct SettingsView: View {
                 }
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
+                    // Diagnostic: proves the shield extension ran. "never" after opening a picked app = iOS never called it.
+                    LabeledContent("Shield last drew", value: store.state.lastShown.map { "\($0.name), \($0.at.formatted(date: .omitted, time: .shortened))" } ?? "never")
+                    LabeledContent("Screen Time", value: AuthorizationCenter.shared.authorizationStatus == .approved ? "allowed" : "not allowed")
                 }
             }
             .navigationTitle("Settings")

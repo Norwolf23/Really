@@ -44,6 +44,7 @@ struct Settings: Codable, Equatable {
 struct Shown: Codable, Equatable {
     var id: String
     var name: String
+    var at = Date.now
 }
 
 /// Written by the shield extensions only.

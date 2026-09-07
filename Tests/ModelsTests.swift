@@ -56,7 +56,7 @@ final class ModelsTests: XCTestCase {
         var state = ShieldState()
         state.cooldowns["com.burbn.instagram"] = Date(timeIntervalSince1970: 1_800_000_000)
         state.lastQuestion["com.burbn.instagram"] = "pack-instagram.normal.0"
-        state.lastShown = Shown(id: "com.burbn.instagram", name: "Instagram")
+        state.lastShown = Shown(id: "com.burbn.instagram", name: "Instagram", at: Date(timeIntervalSince1970: 1_800_000_000))
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .secondsSince1970
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .secondsSince1970
         XCTAssertEqual(try decoder.decode(ShieldState.self, from: encoder.encode(state)), state)
