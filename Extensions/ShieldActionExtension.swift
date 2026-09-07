@@ -28,7 +28,8 @@ final class ShieldActionExtension: ShieldActionDelegate {
                 intervalStart: calendar.dateComponents(parts, from: .now),
                 intervalEnd: calendar.dateComponents(parts, from: until),
                 repeats: false))
-            completionHandler(.none) // ponytail: if the shield doesn't lift on device, return .close and let the user reopen the app
+            // .none leaves the shield frozen on screen (seen on iOS 26.6), so close; the next tap on the app opens it unshielded.
+            completionHandler(.close)
         }
     }
 }
