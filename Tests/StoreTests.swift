@@ -1,9 +1,9 @@
 import XCTest
 @testable import Really
 
-@MainActor
 final class StoreTests: XCTestCase {
     var dir: URL!
+    let ig = "com.burbn.instagram"
 
     override func setUp() {
         dir = FileManager.default.temporaryDirectory.appendingPathComponent("really-tests-\(UUID().uuidString)")
@@ -15,94 +15,66 @@ final class StoreTests: XCTestCase {
 
     func testStartsEmpty() {
         let store = Store(directory: dir)
-        XCTAssertTrue(store.apps.isEmpty)
         XCTAssertTrue(store.events.isEmpty)
+        XCTAssertEqual(store.settings, Settings())
+        XCTAssertEqual(store.state, ShieldState())
     }
 
-    func testUpdateInsertsThenReplaces() {
+    func testRecordAppendsEvent() {
         let store = Store(directory: dir)
-        var app = Catalog.gatedApp(Catalog.entries[0])
-        store.update(app)
-        XCTAssertEqual(store.apps.count, 1)
-        app.pauseSeconds = 9
-        store.update(app)
-        XCTAssertEqual(store.apps.count, 1)
-        XCTAssertEqual(store.app("instagram")?.pauseSeconds, 9)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        store.record(.proceed, app: ig, name: "Instagram", now: now)
+        store.record(.no, app: ig, name: "Instagram")
+        XCTAssertEqual(store.events.map(\.decision), [.proceed, .no])
+        XCTAssertEqual(store.events[0].appName, "Instagram")
+        XCTAssertEqual(store.events[0].at, now)
     }
 
-    func testRemove() {
-        let store = Store(directory: dir)
-        store.update(Catalog.gatedApp(Catalog.entries[0]))
-        store.remove("instagram")
-        XCTAssertNil(store.app("instagram"))
-    }
-
-    func testPersistsAcrossInstances() {
+    func testEverythingPersistsAcrossInstances() {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         do {
             let store = Store(directory: dir)
-            store.update(Catalog.gatedApp(Catalog.entries[0]))
-            store.record(.no, for: "instagram", questionID: "q1", now: now)
-        }
-        let reloaded = Store(directory: dir)
-        XCTAssertEqual(reloaded.apps.map(\.id), ["instagram"])
-        XCTAssertEqual(reloaded.events.count, 1)
-        XCTAssertEqual(reloaded.events[0].decision, .no)
-        XCTAssertEqual(reloaded.events[0].at.timeIntervalSince1970, now.timeIntervalSince1970, accuracy: 1)
-        XCTAssertEqual(reloaded.app("instagram")?.lastQuestionID, "q1")
-    }
-
-    func testRecordProceedStartsCooldown() {
-        let store = Store(directory: dir)
-        var app = Catalog.gatedApp(Catalog.entries[0]); app.cooldownMinutes = 15
-        store.update(app)
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        store.record(.proceed, for: "instagram", questionID: nil, now: now)
-        XCTAssertEqual(store.app("instagram")?.cooldownUntil, now.addingTimeInterval(15 * 60))
-        XCTAssertEqual(store.events.last?.decision, .proceed)
-    }
-
-    func testRecordNoDoesNotStartCooldown() {
-        let store = Store(directory: dir)
-        store.update(Catalog.gatedApp(Catalog.entries[0]))
-        store.record(.no, for: "instagram", questionID: nil)
-        XCTAssertNil(store.app("instagram")?.cooldownUntil)
-    }
-
-    func testRecordForUnknownAppIsIgnored() {
-        let store = Store(directory: dir)
-        store.record(.no, for: "nope", questionID: nil)
-        XCTAssertTrue(store.events.isEmpty)
-    }
-
-    func testMarkCheckIn() {
-        let store = Store(directory: dir)
-        store.update(Catalog.gatedApp(Catalog.entries[0]))
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        store.markCheckIn("instagram", now: now)
-        XCTAssertEqual(store.app("instagram")?.lastCheckIn, now)
-    }
-
-    func testSettingsPersistAcrossInstances() {
-        do {
-            let store = Store(directory: dir)
-            XCTAssertEqual(store.settings, Settings())
+            store.record(.no, app: ig, name: "Instagram", now: now)
             store.settings.meanness = .annoyed
             store.settings.escalates = false
             store.settings.hasOnboarded = true
+            store.settings.cooldownMinutes = 45
+            store.state.cooldowns[ig] = now
+            store.state.lastQuestion[ig] = "q1"
+            store.state.lastShown = Shown(id: ig, name: "Instagram")
         }
         let reloaded = Store(directory: dir)
+        XCTAssertEqual(reloaded.events.count, 1)
+        XCTAssertEqual(reloaded.events[0].decision, .no)
+        XCTAssertEqual(reloaded.events[0].at.timeIntervalSince1970, now.timeIntervalSince1970, accuracy: 1)
         XCTAssertEqual(reloaded.settings.meanness, .annoyed)
         XCTAssertFalse(reloaded.settings.escalates)
         XCTAssertTrue(reloaded.settings.hasOnboarded)
+        XCTAssertEqual(reloaded.settings.cooldownMinutes, 45)
+        XCTAssertEqual(reloaded.state.cooldowns[ig]?.timeIntervalSince1970 ?? 0, now.timeIntervalSince1970, accuracy: 1)
+        XCTAssertEqual(reloaded.state.lastQuestion[ig], "q1")
+        XCTAssertEqual(reloaded.state.lastShown, Shown(id: ig, name: "Instagram"))
     }
 
-    func testRecordStoresReason() {
+    /// The extensions write events.json and state.json while the app is backgrounded; reload() picks them up.
+    func testReloadPicksUpWritesFromAnotherInstance() {
+        let app = Store(directory: dir)
+        app.settings.hasOnboarded = true
+        let ext = Store(directory: dir)
+        ext.record(.proceed, app: ig, name: "Instagram")
+        ext.state.cooldowns[ig] = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertTrue(app.events.isEmpty)
+        app.reload()
+        XCTAssertEqual(app.events.count, 1)
+        XCTAssertEqual(app.state.cooldowns.count, 1)
+        XCTAssertTrue(app.settings.hasOnboarded)
+    }
+
+    func testCorruptFileIsMovedAsideNotFatal() throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data("not json".utf8).write(to: dir.appendingPathComponent("events.json"))
         let store = Store(directory: dir)
-        store.update(Catalog.gatedApp(Catalog.entries[0]))
-        store.record(.proceed, for: "instagram", questionID: nil, reason: "Bored")
-        store.record(.no, for: "instagram", questionID: nil)
-        XCTAssertEqual(store.events[0].reason, "Bored")
-        XCTAssertNil(store.events[1].reason)
+        XCTAssertTrue(store.events.isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.appendingPathComponent("events.json.bak").path))
     }
 }

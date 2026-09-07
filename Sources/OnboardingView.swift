@@ -1,12 +1,13 @@
+import FamilyControls
 import SwiftUI
 
 struct OnboardingView: View {
     @EnvironmentObject var store: Store
-    @Environment(\.openURL) private var openURL
 
     @State private var step = 0
-    @State private var chosen: Set<String> = []
     @State private var meanness = Tier.normal
+    @State private var picking = false
+    @State private var denied = false
 
     var body: some View {
         ZStack {
@@ -17,7 +18,7 @@ struct OnboardingView: View {
                     page(title: "Really?", body: "You open apps you don't mean to. This asks first.", button: "Go on")
                 case 1:
                     page(title: "How it works",
-                         body: "An automation runs when one of your apps opens.\nReally? asks you a question.\nContinue after a pause, or say No.",
+                         body: "You pick the apps.\niOS puts Really? in front of them.\nAnswer, or don't.",
                          button: "Fine")
                 case 2:
                     page(title: "You downloaded an app to stop using apps.", body: "Really?", button: "Yes, really.")
@@ -26,19 +27,20 @@ struct OnboardingView: View {
                 case 4:
                     chooseMeanness
                 default:
-                    setup
+                    page(title: "Done.", body: "Go open one of them. See what happens.", button: "Fine") { finish() }
                 }
             }
             .id(step)
             .transition(.opacity)
         }
         .animation(.easeInOut(duration: 0.25), value: step)
-        .onAppear { meanness = store.settings.meanness; chosen = Set(store.apps.map(\.id)) }
+        .onAppear { meanness = store.settings.meanness }
+        .familyActivityPicker(isPresented: $picking, selection: $store.settings.selection)
     }
 
     // MARK: pages
 
-    private func page(title: String, body: String, button: String) -> some View {
+    private func page(title: String, body: String, button: String, action: (() -> Void)? = nil) -> some View {
         VStack(spacing: 28) {
             Spacer()
             Text(title)
@@ -50,36 +52,36 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.gray)
             Spacer()
-            primary(button) { step += 1 }
+            primary(button) { action?() ?? (step += 1) }
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 24)
     }
 
     private var chooseApps: some View {
-        VStack(spacing: 20) {
+        let count = store.settings.selection.applicationTokens.count
+        return VStack(spacing: 20) {
             heading("Which apps?")
-            List {
-                ForEach(Catalog.entries) { entry in
-                    Button {
-                        if chosen.contains(entry.id) { chosen.remove(entry.id) } else { chosen.insert(entry.id) }
-                    } label: {
-                        HStack {
-                            Text(entry.name).foregroundStyle(.white)
-                            Spacer()
-                            if chosen.contains(entry.id) { Image(systemName: "checkmark").foregroundStyle(.white) }
-                        }
-                    }
-                }
+            Text("iOS will ask for Screen Time access. Really? only uses it to stand in front of the apps you pick.")
+                .foregroundStyle(.gray)
+                .multilineTextAlignment(.center)
+            Spacer()
+            if count > 0 {
+                Text("\(count) picked").foregroundStyle(.white)
             }
-            .scrollContentBackground(.hidden)
-            primary("Continue") {
-                for entry in Catalog.entries where chosen.contains(entry.id) && store.app(entry.id) == nil {
-                    store.update(Catalog.gatedApp(entry))
-                }
+            if denied {
+                Text("Allow Really? under Settings → Screen Time → Apps with Screen Time Access, then try again.")
+                    .font(.footnote).foregroundStyle(.orange).multilineTextAlignment(.center)
+            }
+            primary(count > 0 ? "Change apps" : "Pick apps") {
+                Task { if await Shield.authorize() { picking = true } else { denied = true } }
+            }
+            Button("Continue") {
+                Shield.apply(store.settings.selection)
                 step += 1
             }
-            .disabled(chosen.isEmpty)
+            .foregroundStyle(count > 0 ? .white : .gray)
+            .disabled(count == 0)
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 24)
@@ -108,31 +110,6 @@ struct OnboardingView: View {
                 store.settings.meanness = meanness
                 step += 1
             }
-        }
-        .padding(.horizontal, 28)
-        .padding(.bottom, 24)
-    }
-
-    private var setup: some View {
-        let name = Catalog.entries.first { chosen.contains($0.id) }?.name ?? store.apps.first?.name ?? "the app"
-        return VStack(spacing: 20) {
-            heading("Set up \(name)")
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(Array(SetupView.steps(appName: name).enumerated()), id: \.offset) { index, text in
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("\(index + 1)").bold().foregroundStyle(.gray).frame(width: 18)
-                            Text(text).foregroundStyle(.white)
-                        }
-                    }
-                }
-            }
-            primary("Open Shortcuts") {
-                finish()
-                if let url = URL(string: "shortcuts://") { openURL(url) }
-            }
-            Button("I'll do it later") { finish() }
-                .foregroundStyle(.gray)
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 24)

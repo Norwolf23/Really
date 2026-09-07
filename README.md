@@ -1,6 +1,6 @@
 # Really?
 
-A dry, sarcastic question before you open an app you open too much.
+A dry, sarcastic question in front of an app you open too much.
 
 ## Build
 
@@ -8,30 +8,34 @@ A dry, sarcastic question before you open an app you open too much.
     xcodegen generate
     open Really.xcodeproj
 
-Run the `Really` scheme on your iPhone (iOS 17+). Tests: `xcodebuild test -project Really.xcodeproj -scheme Really -destination 'platform=iOS Simulator,name=iPhone 17'`.
+Run the `Really` scheme on your iPhone (iOS 17+). The shield only works on a real device.
+Tests: `xcodebuild test -project Really.xcodeproj -scheme Really -destination 'platform=iOS Simulator,name=iPhone 17'`.
 
-## Set up an app
+## Set up
 
-1. In Really?, tap + and add the app.
-2. Tap the app, then Automation setup, and follow the six steps in the Shortcuts app.
+1. Open Really?, grant Screen Time access when asked.
+2. Pick apps in the system picker. Done.
 
-Starter-pack lines are append-only: editing or reordering a pack shifts saved single-question choices.
+iOS now shows the Really? shield whenever one of those apps opens. **No** closes it.
+**Yes, really** lets you in for the cooldown (Settings, 15 min minimum), then the shield is back.
 
-The automation runs Really?'s **Check In** action silently. It returns `ask` when
-the app is enabled and you are outside the cooldown, and the If block then runs
-**Ask**, which opens the question. After Continue, Really? opens the app and
-starts the cooldown, so the re-fired automation stays silent.
+## How it works
 
-## What v0.2 adds
+Three app extensions share one App Group with the app:
 
-- First-launch intro: pick your apps and how mean Really? should be (Mild, Mean, Brutal).
-- Settings tab: meanness, "Gets meaner through the day" (uses each app's Annoyed and Brutal thresholds), replay the intro.
-- Continue asks why. Pick a reason or type one; it lands in the log.
-- Stats: your leading excuse this week, the hour you most often cave, and a full check-in log filterable by app.
+- `ShieldConfig` picks the tier (Mild/Mean/Brutal, escalating with today's opens) and a line from the app's pack, and draws the shield.
+- `ShieldAction` handles the buttons: logs the answer, lifts the shield and schedules the cooldown.
+- `Monitor` puts the shield back when the cooldown ends.
+
+Starter-pack lines are append-only: editing or reordering a pack shifts the "don't repeat the last line" bookkeeping.
+
+## Shipping to the App Store
+
+The Family Controls *development* entitlement works for Xcode installs. Distribution needs Apple's
+approval, requested per bundle id: `studio.nickson.really`, `.shield-config`, `.shield-action`, `.monitor`.
 
 ## Design docs
 
-- Spec: `docs/superpowers/specs/2026-09-06-really-design.md`
-- Plan: `docs/superpowers/plans/2026-09-06-really-v1.md`
+- v1 spec: `docs/superpowers/specs/2026-09-06-really-design.md`
 - v2 spec: `docs/superpowers/specs/2026-09-06-really-v2-design.md`
-- v2 plan: `docs/superpowers/plans/2026-09-06-really-v2.md`
+- v3 (Screen Time) spec: `docs/superpowers/specs/2026-09-07-really-v3-screentime-design.md`
