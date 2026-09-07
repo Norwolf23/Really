@@ -4,54 +4,27 @@ import XCTest
 final class LogicTests: XCTestCase {
     let cal = Calendar(identifier: .gregorian)
     let now = Date(timeIntervalSince1970: 1_800_000_000) // fixed instant
-
-    func app(_ id: String = "instagram") -> GatedApp {
-        GatedApp(id: id, name: id, urlScheme: "\(id)://", sessionMinutes: 10)
-    }
+    let ig = "com.burbn.instagram"
+    let tt = "com.zhiliaoapp.musically"
 
     func event(_ appID: String, minutesAgo: Double, _ decision: Decision = .no) -> CheckIn {
-        CheckIn(appID: appID, at: now.addingTimeInterval(-minutesAgo * 60), decision: decision)
-    }
-
-    // MARK: cooldown
-
-    func testNoCooldownWhenUnset() {
-        XCTAssertFalse(Logic.isInCooldown(app(), now: now))
-    }
-
-    func testInCooldownBeforeExpiry() {
-        var a = app(); a.cooldownUntil = now.addingTimeInterval(60)
-        XCTAssertTrue(Logic.isInCooldown(a, now: now))
-    }
-
-    func testCooldownOverAtExactExpiry() {
-        var a = app(); a.cooldownUntil = now
-        XCTAssertFalse(Logic.isInCooldown(a, now: now))
-    }
-
-    func testShouldAskFalseForNilDisabledOrCooldown() {
-        XCTAssertFalse(Logic.shouldAsk(nil, now: now))
-        var disabled = app(); disabled.enabled = false
-        XCTAssertFalse(Logic.shouldAsk(disabled, now: now))
-        var cooling = app(); cooling.cooldownUntil = now.addingTimeInterval(1)
-        XCTAssertFalse(Logic.shouldAsk(cooling, now: now))
-        XCTAssertTrue(Logic.shouldAsk(app(), now: now))
+        CheckIn(appID: appID, appName: appID, at: now.addingTimeInterval(-minutesAgo * 60), decision: decision)
     }
 
     // MARK: open number
 
     func testOpenNumberIsOneWithNoEvents() {
-        XCTAssertEqual(Logic.openNumberToday(events: [], appID: "instagram", now: now, calendar: cal), 1)
+        XCTAssertEqual(Logic.openNumberToday(events: [], appID: ig, now: now, calendar: cal), 1)
     }
 
     func testOpenNumberCountsOnlyThisAppToday() {
         let events = [
-            event("instagram", minutesAgo: 5),
-            event("instagram", minutesAgo: 10, .proceed),
-            event("tiktok", minutesAgo: 5),
-            event("instagram", minutesAgo: 48 * 60),
+            event(ig, minutesAgo: 5),
+            event(ig, minutesAgo: 10, .proceed),
+            event(tt, minutesAgo: 5),
+            event(ig, minutesAgo: 48 * 60),
         ]
-        XCTAssertEqual(Logic.openNumberToday(events: events, appID: "instagram", now: now, calendar: cal), 3)
+        XCTAssertEqual(Logic.openNumberToday(events: events, appID: ig, now: now, calendar: cal), 3)
     }
 
     // MARK: tier
@@ -69,12 +42,19 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(Logic.tier(openNumber: 2, annoyedAt: 5, brutalAt: 2), .brutal)
     }
 
-    // MARK: question selection
-
-    struct FixedRNG: RandomNumberGenerator {
-        var value: UInt64
-        mutating func next() -> UInt64 { value }
+    func testEffectiveTierIgnoresOpensWhenEscalationOff() {
+        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 40, annoyedAt: 3, brutalAt: 6, escalates: false), .normal)
+        XCTAssertEqual(Logic.effectiveTier(base: .brutal, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: false), .brutal)
     }
+
+    func testEffectiveTierTakesHigherOfBaseAndEscalation() {
+        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 3, annoyedAt: 3, brutalAt: 6, escalates: true), .annoyed)
+        XCTAssertEqual(Logic.effectiveTier(base: .annoyed, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: true), .annoyed)
+        XCTAssertEqual(Logic.effectiveTier(base: .brutal, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: true), .brutal)
+        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 6, annoyedAt: 3, brutalAt: 6, escalates: true), .brutal)
+    }
+
+    // MARK: question selection
 
     let pack: [Question] = [
         Question(id: "n0", text: "n0", tier: .normal),
@@ -84,63 +64,50 @@ final class LogicTests: XCTestCase {
     ]
 
     func testPickReturnsNilForEmptyPool() {
-        var rng = FixedRNG(value: 0)
-        XCTAssertNil(Logic.pickQuestion(for: app(), pack: [], tier: .normal, using: &rng))
+        var rng = SystemRandomNumberGenerator()
+        XCTAssertNil(Logic.pickQuestion(pack: [], tier: .normal, lastID: nil, using: &rng))
     }
 
-    func testPickSingleReturnsChosenQuestion() {
-        var a = app(); a.mode = .single; a.singleQuestionID = "a0"
-        var rng = FixedRNG(value: 0)
-        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .brutal, using: &rng)?.id, "a0")
-    }
-
-    func testPickSingleFallsBackToFirstWhenIDMissing() {
-        var a = app(); a.mode = .single; a.singleQuestionID = "gone"
-        var rng = FixedRNG(value: 0)
-        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "n0")
-    }
-
-    func testPickRotateStaysInTier() {
+    func testPickStaysInTier() {
         var rng = SystemRandomNumberGenerator()
         for _ in 0..<20 {
-            let q = Logic.pickQuestion(for: app(), pack: pack, tier: .annoyed, using: &rng)
-            XCTAssertEqual(q?.tier, .annoyed)
+            XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, lastID: nil, using: &rng)?.tier, .annoyed)
         }
     }
 
-    func testPickRotateFallsBackToLowerTierThenAnything() {
+    func testPickFallsBackToLowerTierThenAnything() {
+        var rng = SystemRandomNumberGenerator()
         let onlyNormal = pack.filter { $0.tier == .normal }
-        var rng = SystemRandomNumberGenerator()
-        XCTAssertEqual(Logic.pickQuestion(for: app(), pack: onlyNormal, tier: .brutal, using: &rng)?.tier, .normal)
+        XCTAssertEqual(Logic.pickQuestion(pack: onlyNormal, tier: .brutal, lastID: nil, using: &rng)?.tier, .normal)
         let onlyBrutal = pack.filter { $0.tier == .brutal }
-        XCTAssertEqual(Logic.pickQuestion(for: app(), pack: onlyBrutal, tier: .normal, using: &rng)?.id, "b0")
+        XCTAssertEqual(Logic.pickQuestion(pack: onlyBrutal, tier: .normal, lastID: nil, using: &rng)?.id, "b0")
     }
 
-    func testPickRotateAvoidsLastShown() {
-        var a = app(); a.lastQuestionID = "n0"
+    func testPickAvoidsLastShown() {
         var rng = SystemRandomNumberGenerator()
         for _ in 0..<20 {
-            XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "n1")
+            XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, lastID: "n0", using: &rng)?.id, "n1")
         }
     }
 
-    func testPickRotateRepeatsWhenOnlyOneCandidate() {
-        var a = app(); a.lastQuestionID = "a0"
+    func testPickRepeatsWhenOnlyOneCandidate() {
         var rng = SystemRandomNumberGenerator()
-        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .annoyed, using: &rng)?.id, "a0")
+        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, lastID: "a0", using: &rng)?.id, "a0")
     }
 
-    func testPickUsesCustomQuestionsWhenSourceIsCustom() {
-        var a = app(); a.source = .custom
-        a.customQuestions = [Question(id: "c", text: "custom", tier: .normal)]
-        var rng = SystemRandomNumberGenerator()
-        XCTAssertEqual(Logic.pickQuestion(for: a, pack: pack, tier: .normal, using: &rng)?.id, "c")
+    // MARK: cooldowns
+
+    func testAnyCooldownActive() {
+        XCTAssertFalse(Logic.anyCooldownActive([:], now: now))
+        XCTAssertFalse(Logic.anyCooldownActive([ig: now], now: now))
+        XCTAssertFalse(Logic.anyCooldownActive([ig: now.addingTimeInterval(-1)], now: now))
+        XCTAssertTrue(Logic.anyCooldownActive([ig: now.addingTimeInterval(-1), tt: now.addingTimeInterval(1)], now: now))
     }
 
     // MARK: streak
 
     func daysAgo(_ d: Int, _ decision: Decision = .no) -> CheckIn {
-        CheckIn(appID: "instagram", at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision)
+        CheckIn(appID: ig, appName: "Instagram", at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision)
     }
 
     func testStreakZeroWithNoEvents() {
@@ -170,11 +137,9 @@ final class LogicTests: XCTestCase {
 
     // MARK: time saved
 
-    func testTimeSavedSumsSessionMinutesOverNoEvents() {
-        var ig = app("instagram"); ig.sessionMinutes = 12
-        var tt = app("tiktok"); tt.sessionMinutes = 20
-        let events = [event("instagram", minutesAgo: 1), event("instagram", minutesAgo: 2, .proceed), event("tiktok", minutesAgo: 3), event("gone", minutesAgo: 4)]
-        XCTAssertEqual(Logic.timeSavedMinutes(events: events, apps: [ig, tt]), 32)
+    func testTimeSavedSumsCatalogMinutesOverNoEvents() {
+        let events = [event(ig, minutesAgo: 1), event(ig, minutesAgo: 2, .proceed), event(tt, minutesAgo: 3), event("com.example.unknown", minutesAgo: 4)]
+        XCTAssertEqual(Logic.timeSavedMinutes(events: events), 12 + 20 + 10)
     }
 
     // MARK: daily counts
@@ -191,46 +156,10 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(days[0].proceeds, 0)
     }
 
-    // MARK: effective tier
-
-    func testEffectiveTierIgnoresOpensWhenEscalationOff() {
-        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 40, annoyedAt: 3, brutalAt: 6, escalates: false), .normal)
-        XCTAssertEqual(Logic.effectiveTier(base: .brutal, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: false), .brutal)
-    }
-
-    func testEffectiveTierTakesHigherOfBaseAndEscalation() {
-        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 3, annoyedAt: 3, brutalAt: 6, escalates: true), .annoyed)
-        XCTAssertEqual(Logic.effectiveTier(base: .annoyed, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: true), .annoyed)
-        XCTAssertEqual(Logic.effectiveTier(base: .brutal, openNumber: 1, annoyedAt: 3, brutalAt: 6, escalates: true), .brutal)
-        XCTAssertEqual(Logic.effectiveTier(base: .normal, openNumber: 6, annoyedAt: 3, brutalAt: 6, escalates: true), .brutal)
-    }
-
-    // MARK: reasons
-
-    func reasoned(_ reason: String?, daysAgo d: Int = 0, _ decision: Decision = .proceed) -> CheckIn {
-        CheckIn(appID: "instagram", at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision, reason: reason)
-    }
-
-    func testReasonCountsOnlyCountsProceedWithReasonInsideWindow() {
-        let events = [
-            reasoned("Bored"), reasoned("Bored"), reasoned("Checking one thing"),
-            reasoned("Bored", daysAgo: 0, .no), reasoned(nil), reasoned(""), reasoned("Old", daysAgo: 10),
-        ]
-        let since = cal.date(byAdding: .day, value: -7, to: now)!
-        let counts = Logic.reasonCounts(events: events, since: since)
-        XCTAssertEqual(counts.map(\.reason), ["Bored", "Checking one thing"])
-        XCTAssertEqual(counts.map(\.count), [2, 1])
-    }
-
-    func testReasonCountsTieBreaksAlphabetically() {
-        let counts = Logic.reasonCounts(events: [reasoned("Zzz"), reasoned("Aaa")], since: now.addingTimeInterval(-60))
-        XCTAssertEqual(counts.map(\.reason), ["Aaa", "Zzz"])
-    }
-
     // MARK: worst hour
 
     func at(hour: Int, _ decision: Decision = .proceed) -> CheckIn {
-        CheckIn(appID: "instagram", at: cal.date(bySettingHour: hour, minute: 0, second: 0, of: now)!, decision: decision)
+        CheckIn(appID: ig, appName: "Instagram", at: cal.date(bySettingHour: hour, minute: 0, second: 0, of: now)!, decision: decision)
     }
 
     func testWorstHourNilWhenNoProceeds() {
@@ -251,7 +180,7 @@ final class LogicTests: XCTestCase {
 
     func testGroupedByDayNewestFirst() {
         let today10 = at(hour: 10), today11 = at(hour: 11)
-        let yesterday = CheckIn(appID: "instagram", at: cal.date(byAdding: .day, value: -1, to: at(hour: 9).at)!, decision: .no)
+        let yesterday = CheckIn(appID: ig, appName: "Instagram", at: cal.date(byAdding: .day, value: -1, to: at(hour: 9).at)!, decision: .no)
         let groups = Logic.groupedByDay(events: [yesterday, today10, today11], calendar: cal)
         XCTAssertEqual(groups.count, 2)
         XCTAssertEqual(groups[0].day, cal.startOfDay(for: now))

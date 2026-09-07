@@ -8,6 +8,7 @@ struct StatsView: View {
         let now = Date()
         let today = store.events.filter { Calendar.current.isDateInToday($0.at) }
         let days = Logic.dailyCounts(events: store.events, days: 7, now: now)
+        let perApp = Dictionary(grouping: today, by: \.appName)
         NavigationStack {
             List {
                 Section("Today") {
@@ -19,7 +20,7 @@ struct StatsView: View {
                     row("Days in a row with a no", Logic.streak(events: store.events, now: now))
                 }
                 Section("Time saved, roughly") {
-                    row("Minutes", Logic.timeSavedMinutes(events: store.events, apps: store.apps))
+                    row("Minutes", Logic.timeSavedMinutes(events: store.events))
                 }
                 Section("Last 7 days") {
                     Chart {
@@ -39,15 +40,6 @@ struct StatsView: View {
                     .frame(height: 180)
                     .padding(.vertical, 8)
                 }
-                Section("Excuses, last 7 days") {
-                    let counts = Logic.reasonCounts(events: store.events, since: Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: now)) ?? now)
-                    if counts.isEmpty {
-                        Text("None yet.").foregroundStyle(.secondary)
-                    } else {
-                        Text("Leading excuse: \(counts[0].reason)").font(.subheadline.bold())
-                        ForEach(counts) { row($0.reason, $0.count) }
-                    }
-                }
                 if let hour = Logic.worstHour(events: store.events) {
                     Section("Worst hour") {
                         Text("Most likely to cave: \(String(format: "%02d:00–%02d:00", hour, (hour + 1) % 24))")
@@ -56,16 +48,15 @@ struct StatsView: View {
                 Section("Log") {
                     NavigationLink("All check-ins") { LogView() }
                 }
-                Section("Per app") {
-                    ForEach(store.apps) { app in
-                        let mine = today.filter { $0.appID == app.id }
-                        HStack {
-                            Text(app.name)
-                            Spacer()
-                            Text("\(mine.filter { $0.decision == .no }.count) no · \(mine.filter { $0.decision == .proceed }.count) through")
-                                .foregroundStyle(.secondary)
-                            if Logic.isInCooldown(app, now: now) {
-                                Image(systemName: "hourglass").foregroundStyle(.secondary)
+                if !perApp.isEmpty {
+                    Section("Per app, today") {
+                        ForEach(perApp.keys.sorted(), id: \.self) { name in
+                            let mine = perApp[name] ?? []
+                            HStack {
+                                Text(name)
+                                Spacer()
+                                Text("\(mine.filter { $0.decision == .no }.count) no · \(mine.filter { $0.decision == .proceed }.count) through")
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
