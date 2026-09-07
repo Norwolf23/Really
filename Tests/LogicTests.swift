@@ -95,6 +95,15 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, lastID: "a0", using: &rng)?.id, "a0")
     }
 
+    // MARK: shield rounds
+
+    func testShieldStepRounds() {
+        XCTAssertEqual(Logic.shieldStep(round: 1, primary: true), .through)   // Nah, making a new post
+        XCTAssertEqual(Logic.shieldStep(round: 1, primary: false), .askAgain) // Yea
+        XCTAssertEqual(Logic.shieldStep(round: 2, primary: true), .close)     // No
+        XCTAssertEqual(Logic.shieldStep(round: 2, primary: false), .through)  // Yes
+    }
+
     // MARK: cooldowns
 
     func testAnyCooldownActive() {

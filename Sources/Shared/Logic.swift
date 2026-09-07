@@ -27,6 +27,18 @@ enum Logic {
         return candidates.randomElement(using: &rng)
     }
 
+    enum ShieldStep { case through, askAgain, close }
+
+    /// Round 1: primary "Nah, making a new post" / secondary "Yea". Round 2: primary "No" / secondary "Yes".
+    static func shieldStep(round: Int, primary: Bool) -> ShieldStep {
+        switch (round, primary) {
+        case (2, true): return .close
+        case (2, false): return .through
+        case (_, true): return .through
+        case (_, false): return .askAgain
+        }
+    }
+
     static func anyCooldownActive(_ cooldowns: [String: Date], now: Date) -> Bool {
         cooldowns.values.contains { $0 > now }
     }
