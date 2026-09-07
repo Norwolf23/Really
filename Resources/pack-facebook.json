@@ -1,0 +1,38 @@
+{
+  "normal": [
+    "Are you here for someone from school, or for the marketplace?",
+    "What are you hoping to find out about someone you haven't spoken to in years?",
+    "Is this catching up, or just checking up?",
+    "Did you actually need something from marketplace, or is this a reflex?",
+    "Quick check: do you even remember why you added this person?",
+    "Name the last thing here that actually mattered to you.",
+    "You could just message them instead of watching from a distance.",
+    "Was this curiosity, or something closer to nosiness?",
+    "Is there a reason you're here, or just an old muscle memory?",
+    "What were you doing before this app reminded you it exists?"
+  ],
+  "annoyed": [
+    "Again? Someone from your old school still hasn't posted anything new.",
+    "Third time today. Marketplace still has the same couch.",
+    "You said you'd just check one listing. That was five profiles ago.",
+    "Marketplace doesn't need you to keep refreshing it, but here you are.",
+    "You don't talk to half these people. You just watch them.",
+    "Same faces, same distance, same nothing resolved. Go on then.",
+    "You're not catching up. You're checking on people who aren't checking on you.",
+    "The marketplace couch is still there. It will still be there tomorrow.",
+    "You keep scrolling past people you meant to unfriend years ago.",
+    "You already know nothing here has changed since this morning."
+  ],
+  "brutal": [
+    "You know more about a stranger's kitchen renovation than you do about your own week.",
+    "You have not spoken to half these people since a building you no longer enter.",
+    "Marketplace has turned you into a window shopper for furniture you don't need.",
+    "Congratulations, you've become a silent observer of people who forgot you exist.",
+    "There is nothing new here. There wasn't yesterday either.",
+    "Imagine explaining tonight's scroll to the version of you from school.",
+    "Go ahead. Check one more profile of someone who never checks yours.",
+    "You already know this isn't friendship. It's surveillance with a birthday reminder.",
+    "This is what catching up looks like when nobody's actually talking. This is it.",
+    "No, seriously. Really?"
+  ]
+}
