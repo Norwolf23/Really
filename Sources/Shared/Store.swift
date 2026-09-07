@@ -43,8 +43,8 @@ final class Store: ObservableObject {
         state = Store.load(ShieldState.self, from: stateURL) ?? ShieldState()
     }
 
-    func record(_ decision: Decision, app id: String, name: String, now: Date = .now) {
-        events.append(CheckIn(appID: id, appName: name, at: now, decision: decision))
+    func record(_ decision: Decision, app id: String, now: Date = .now) {
+        events.append(CheckIn(appID: id, at: now, decision: decision))
     }
 
     private func save<T: Encodable>(_ value: T, to url: URL) {

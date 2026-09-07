@@ -8,7 +8,7 @@ struct StatsView: View {
         let now = Date()
         let today = store.events.filter { Calendar.current.isDateInToday($0.at) }
         let days = Logic.dailyCounts(events: store.events, days: 7, now: now)
-        let perApp = Dictionary(grouping: today, by: \.appName)
+        let perApp = Dictionary(grouping: today, by: \.appID)
         NavigationStack {
             List {
                 Section("Today") {
@@ -50,10 +50,10 @@ struct StatsView: View {
                 }
                 if !perApp.isEmpty {
                     Section("Per app, today") {
-                        ForEach(perApp.keys.sorted(), id: \.self) { name in
-                            let mine = perApp[name] ?? []
+                        ForEach(perApp.keys.sorted(), id: \.self) { id in
+                            let mine = perApp[id] ?? []
                             HStack {
-                                Text(name)
+                                AppLabel(id: id)
                                 Spacer()
                                 Text("\(mine.filter { $0.decision == .no }.count) no · \(mine.filter { $0.decision == .proceed }.count) through")
                                     .foregroundStyle(.secondary)

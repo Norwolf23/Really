@@ -1,5 +1,6 @@
 import FamilyControls
 import Foundation
+import ManagedSettings
 
 enum Tier: String, Codable, CaseIterable, Comparable {
     case normal, annoyed, brutal
@@ -21,13 +22,24 @@ struct Question: Codable, Identifiable, Hashable {
     var tier: Tier
 }
 
-/// One shield answer. `appID` is the bundle id the shield extension saw; `appName` its display name.
+/// One shield answer. `appID` is the app's opaque token, base64-encoded (see `TokenID`); the app renders it with `Label(token)`.
 struct CheckIn: Codable, Identifiable, Equatable {
     var id = UUID()
     var appID: String
-    var appName: String
     var at: Date
     var decision: Decision
+}
+
+/// Bundle ids and names are readable only inside the shield configuration extension, which can't write anything.
+/// The token itself is available everywhere, so it is the app id.
+enum TokenID {
+    static func string(_ token: ApplicationToken) -> String {
+        (try? JSONEncoder().encode(token))?.base64EncodedString() ?? "unknown"
+    }
+
+    static func token(_ id: String) -> ApplicationToken? {
+        Data(base64Encoded: id).flatMap { try? JSONDecoder().decode(ApplicationToken.self, from: $0) }
+    }
 }
 
 /// Written by the app only.
@@ -41,18 +53,10 @@ struct Settings: Codable, Equatable {
     var selection = FamilyActivitySelection()
 }
 
-struct Shown: Codable, Equatable {
-    var id: String
-    var name: String
-    var at = Date.now
-}
-
 /// Written by the shield extensions only.
 struct ShieldState: Codable, Equatable {
     var cooldowns: [String: Date] = [:]
     var lastQuestion: [String: String] = [:]
-    /// The app the configuration extension last rendered; the action extension can't read app identity itself.
-    var lastShown: Shown? = nil
     /// Diagnostic: which button the action extension last handled.
     var lastAction: String? = nil
 }
