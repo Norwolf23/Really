@@ -24,6 +24,11 @@ targetTemplates:
       properties:
         com.apple.developer.family-controls: true
         com.apple.security.application-groups: [group.studio.nickson.really]
+    info:
+      path: Extensions/${target_name}-Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     settings:
       groups: [signing]
 targets:
@@ -65,7 +70,6 @@ targets:
     sources:
       - Extensions/ShieldConfigurationExtension.swift
     info:
-      path: Extensions/ShieldConfig-Info.plist
       properties:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
@@ -78,7 +82,6 @@ targets:
     sources:
       - Extensions/ShieldActionExtension.swift
     info:
-      path: Extensions/ShieldAction-Info.plist
       properties:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
@@ -91,7 +94,6 @@ targets:
     sources:
       - Extensions/MonitorExtension.swift
     info:
-      path: Extensions/Monitor-Info.plist
       properties:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension

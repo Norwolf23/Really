@@ -22,7 +22,7 @@ struct AppsView: View {
             .navigationTitle("Really?")
             .toolbar {
                 Button(tokens.isEmpty ? "Pick apps" : "Change") {
-                    Task { if await Shield.authorize() { picking = true } else { denied = true } }
+                    Task { @MainActor in if await Shield.authorize() { picking = true } else { denied = true } }
                 }
             }
             .familyActivityPicker(isPresented: $picking, selection: $store.settings.selection)

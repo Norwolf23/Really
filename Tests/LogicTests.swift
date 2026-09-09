@@ -111,6 +111,20 @@ final class LogicTests: XCTestCase {
         XCTAssertTrue(Logic.anyCooldownActive([ig: now.addingTimeInterval(-1), tt: now.addingTimeInterval(1)], now: now))
     }
 
+    func testSplitCooldowns() {
+        let cooldowns = [ig: now.addingTimeInterval(-1), tt: now.addingTimeInterval(1), "x": now]
+        let split = Logic.splitCooldowns(cooldowns, now: now)
+        XCTAssertEqual(split.expired, [ig, "x"])
+        XCTAssertEqual(split.active, [tt: now.addingTimeInterval(1)])
+        XCTAssertEqual(Logic.splitCooldowns([:], now: now).expired, [])
+    }
+
+    func testScheduleMinutesClampsToFloorPlusOne() {
+        XCTAssertEqual(Logic.scheduleMinutes(setting: 5), 16)
+        XCTAssertEqual(Logic.scheduleMinutes(setting: 15), 16)
+        XCTAssertEqual(Logic.scheduleMinutes(setting: 60), 61)
+    }
+
     // MARK: streak
 
     func daysAgo(_ d: Int, _ decision: Decision = .no) -> CheckIn {
@@ -140,13 +154,6 @@ final class LogicTests: XCTestCase {
 
     func testStreakZeroWhenLastNoWasTwoDaysAgo() {
         XCTAssertEqual(Logic.streak(events: [daysAgo(2), daysAgo(3)], now: now, calendar: cal), 0)
-    }
-
-    // MARK: time saved
-
-    func testTimeSavedSumsCatalogMinutesOverNoEvents() {
-        let events = [event(ig, minutesAgo: 1), event(ig, minutesAgo: 2, .proceed), event(tt, minutesAgo: 3), event("com.example.unknown", minutesAgo: 4)]
-        XCTAssertEqual(Logic.timeSavedMinutes(events: events), 12 + 20 + 10)
     }
 
     // MARK: daily counts

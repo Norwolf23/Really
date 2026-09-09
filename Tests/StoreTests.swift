@@ -67,11 +67,35 @@ final class StoreTests: XCTestCase {
         XCTAssertTrue(app.settings.hasOnboarded)
     }
 
-    func testCorruptFileIsMovedAsideNotFatal() throws {
+    /// A torn read of another process's write must never turn into an overwrite.
+    func testUnreadableFileIsNeverOverwritten() throws {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try Data("not json".utf8).write(to: dir.appendingPathComponent("events.json"))
+        let url = dir.appendingPathComponent("events.json")
+        try Data("not json".utf8).write(to: url)
         let store = Store(directory: dir)
         XCTAssertTrue(store.events.isEmpty)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.appendingPathComponent("events.json.bak").path))
+        store.record(.no, app: ig)
+        store.events = []
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "not json")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path + ".bak"))
+    }
+
+    func testReloadDoesNotWriteBack() throws {
+        let app = Store(directory: dir)
+        app.record(.no, app: ig)
+        let url = dir.appendingPathComponent("events.json")
+        let before = try FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
+        Thread.sleep(forTimeInterval: 0.05)
+        app.reload()
+        let after = try FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
+        XCTAssertEqual(before, after)
+    }
+
+    func testEventsAreCapped() {
+        let store = Store(directory: dir)
+        store.events = (0..<Store.maxEvents).map { _ in CheckIn(appID: ig, at: .now, decision: .no) }
+        store.record(.no, app: ig)
+        XCTAssertEqual(store.events.count, Store.maxEvents)
+        XCTAssertEqual(store.events.last?.decision, .no)
     }
 }
