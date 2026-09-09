@@ -14,18 +14,24 @@ final class ModelsTests: XCTestCase {
     }
 
     func testCatalogHasEightAppsWithPacks() {
-        XCTAssertEqual(Catalog.entries.count, 8)
-        for (bundleID, entry) in Catalog.entries {
-            XCTAssertNotNil(Bundle.main.url(forResource: "pack-" + entry.pack, withExtension: "json"), bundleID)
-            XCTAssertGreaterThan(entry.sessionMinutes, 0, bundleID)
+        XCTAssertEqual(Catalog.packs.count, 8)
+        for (bundleID, pack) in Catalog.packs {
+            XCTAssertNotNil(Bundle.main.url(forResource: "pack-" + pack, withExtension: "json"), bundleID)
         }
         XCTAssertEqual(Catalog.pack(for: "com.burbn.instagram"), "instagram")
-        XCTAssertEqual(Catalog.sessionMinutes(for: "com.burbn.instagram"), 12)
     }
 
     func testUnknownBundleIDFallsBackToGeneric() {
         XCTAssertEqual(Catalog.pack(for: "com.example.nope"), "generic")
-        XCTAssertEqual(Catalog.sessionMinutes(for: "com.example.nope"), 10)
+    }
+
+    func testSettingsDecodesWithMissingKeys() throws {
+        let old = try JSONDecoder().decode(Settings.self, from: Data(#"{"hasOnboarded":true,"meanness":"brutal"}"#.utf8))
+        XCTAssertTrue(old.hasOnboarded)
+        XCTAssertEqual(old.meanness, .brutal)
+        XCTAssertEqual(old.cooldownMinutes, 15)
+        XCTAssertTrue(old.selection.includeEntireCategory)
+        XCTAssertEqual(try JSONDecoder().decode(Settings.self, from: Data("{}".utf8)), Settings())
     }
 
     func testTokenIDRoundTripsGarbageToNil() {

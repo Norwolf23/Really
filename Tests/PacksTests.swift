@@ -2,7 +2,7 @@ import XCTest
 @testable import Really
 
 final class PacksTests: XCTestCase {
-    let packs = Set(Catalog.entries.values.map(\.pack))
+    let packs = Set(Catalog.packs.values)
 
     func testEveryCatalogAppHasAFullPack() {
         XCTAssertEqual(packs.count, 8)

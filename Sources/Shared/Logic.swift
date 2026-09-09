@@ -38,6 +38,19 @@ enum Logic {
         cooldowns.values.contains { $0 > now }
     }
 
+    /// Cooldowns whose end has passed, and the ones still running.
+    static func splitCooldowns(_ cooldowns: [String: Date], now: Date) -> (expired: [String], active: [String: Date]) {
+        let active = cooldowns.filter { $0.value > now }
+        let expired = cooldowns.keys.filter { active[$0] == nil }.sorted()
+        return (expired, active)
+    }
+
+    /// DeviceActivity refuses intervals under 15 min, and a 15-min interval built from two Dates can round below
+    /// the floor once seconds are dropped. So: at least the floor, plus one.
+    static func scheduleMinutes(setting: Int) -> Int {
+        max(15, setting) + 1
+    }
+
     static func streak(events: [CheckIn], now: Date, calendar: Calendar = .current) -> Int {
         let noDays = Set(events.filter { $0.decision == .no }.map { calendar.startOfDay(for: $0.at) })
         let today = calendar.startOfDay(for: now)
@@ -51,10 +64,6 @@ enum Logic {
             day = previous
         }
         return count
-    }
-
-    static func timeSavedMinutes(events: [CheckIn]) -> Int {
-        events.filter { $0.decision == .no }.reduce(0) { $0 + Catalog.sessionMinutes(for: $1.appID) }
     }
 
     struct DayCount: Identifiable {

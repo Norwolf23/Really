@@ -19,9 +19,6 @@ struct StatsView: View {
                 Section("Streak") {
                     row("Days in a row with a no", Logic.streak(events: store.events, now: now))
                 }
-                Section("Time saved, roughly") {
-                    row("Minutes", Logic.timeSavedMinutes(events: store.events))
-                }
                 Section("Last 7 days") {
                     Chart {
                         ForEach(days) { day in

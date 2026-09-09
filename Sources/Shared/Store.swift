@@ -7,6 +7,7 @@ import os
 final class Store: ObservableObject {
     static let shared = Store()
     static let group = "group.studio.nickson.really"
+    static let maxEvents = 5000
     private static let log = Logger(subsystem: "studio.nickson.really", category: "store")
 
     @Published var events: [CheckIn] { didSet { save(events, to: eventsURL) } }
@@ -16,6 +17,11 @@ final class Store: ObservableObject {
     private let eventsURL: URL
     private let settingsURL: URL
     private let stateURL: URL
+    /// Files that exist but didn't decode (most likely a torn read of another process's write). Never overwritten.
+    private(set) var unreadable: Set<URL> = []
+    private var loading = false
+    /// The shield extensions' sandbox denies the unlink an atomic write needs; the app keeps atomic writes.
+    private let atomic = Bundle.main.bundleURL.pathExtension != "appex"
 
     static var defaultDirectory: URL {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)
@@ -32,46 +38,52 @@ final class Store: ObservableObject {
         eventsURL = directory.appendingPathComponent("events.json")
         settingsURL = directory.appendingPathComponent("settings.json")
         stateURL = directory.appendingPathComponent("state.json")
-        events = Store.load([CheckIn].self, from: eventsURL) ?? []
-        settings = Store.load(Settings.self, from: settingsURL) ?? Settings()
-        state = Store.load(ShieldState.self, from: stateURL) ?? ShieldState()
+        events = []
+        settings = Settings()
+        state = ShieldState()
+        reload(settingsToo: true)
     }
 
-    /// Pick up what the extensions wrote while the app was in the background.
-    func reload() {
-        events = Store.load([CheckIn].self, from: eventsURL) ?? []
-        state = Store.load(ShieldState.self, from: stateURL) ?? ShieldState()
+    /// Pick up what the extensions wrote while the app was in the background. Reads only; never writes back.
+    func reload(settingsToo: Bool = false) {
+        loading = true
+        defer { loading = false }
+        events = load([CheckIn].self, from: eventsURL) ?? []
+        state = load(ShieldState.self, from: stateURL) ?? ShieldState()
+        if settingsToo { settings = load(Settings.self, from: settingsURL) ?? Settings() }
     }
 
     func record(_ decision: Decision, app id: String, now: Date = .now) {
+        guard !unreadable.contains(eventsURL) else { return } // don't write one event over a log we couldn't read
         events.append(CheckIn(appID: id, at: now, decision: decision))
+        if events.count > Store.maxEvents { events.removeFirst(events.count - Store.maxEvents) }
     }
 
     private func save<T: Encodable>(_ value: T, to url: URL) {
+        guard !loading, !unreadable.contains(url) else { return }
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .secondsSince1970
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            // Not atomic: the shield extensions' sandbox denies the unlink an atomic write needs inside the App Group.
-            // Files are a few KB and one process writes at a time, so a torn read is theoretical.
-            try encoder.encode(value).write(to: url)
+            try encoder.encode(value).write(to: url, options: atomic ? .atomic : [])
         } catch {
             Store.log.error("save \(url.lastPathComponent, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    private static func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
-        let fileManager = FileManager.default
-        guard fileManager.fileExists(atPath: url.path) else { return nil }
+    private func load<T: Decodable>(_ type: T.Type, from url: URL) -> T? {
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .secondsSince1970
-            return try decoder.decode(T.self, from: data)
+            let value = try decoder.decode(T.self, from: data)
+            unreadable.remove(url)
+            return value
         } catch {
-            Store.log.error("load \(url.lastPathComponent, privacy: .public) failed, moving aside as .bak: \(error.localizedDescription, privacy: .public)")
-            try? fileManager.removeItem(at: url.appendingPathExtension("bak"))
-            try? fileManager.moveItem(at: url, to: url.appendingPathExtension("bak"))
+            // ponytail: a permanently corrupt file stays read-only forever; delete it by hand if that ever happens.
+            Store.log.error("load \(url.lastPathComponent, privacy: .public) failed, leaving it untouched: \(error.localizedDescription, privacy: .public)")
+            unreadable.insert(url)
             return nil
         }
     }

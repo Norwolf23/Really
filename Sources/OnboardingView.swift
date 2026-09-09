@@ -74,7 +74,7 @@ struct OnboardingView: View {
                     .font(.footnote).foregroundStyle(.orange).multilineTextAlignment(.center)
             }
             primary(count > 0 ? "Change apps" : "Pick apps") {
-                Task { if await Shield.authorize() { picking = true } else { denied = true } }
+                Task { @MainActor in if await Shield.authorize() { picking = true } else { denied = true } }
             }
             Button("Continue") {
                 Shield.apply(store.settings.selection)

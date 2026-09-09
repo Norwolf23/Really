@@ -50,7 +50,22 @@ struct Settings: Codable, Equatable {
     var cooldownMinutes = 15 // DeviceActivity schedules can't be shorter than 15 min
     var annoyedAt = 3
     var brutalAt = 6
-    var selection = FamilyActivitySelection()
+    /// includeEntireCategory: a ticked category expands into app tokens, so category picks shield something.
+    var selection = FamilyActivitySelection(includeEntireCategory: true)
+
+    init() {}
+
+    /// Missing keys fall back to defaults, so adding a field never makes an old settings.json undecodable.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        hasOnboarded = try c.decodeIfPresent(Bool.self, forKey: .hasOnboarded) ?? hasOnboarded
+        meanness = try c.decodeIfPresent(Tier.self, forKey: .meanness) ?? meanness
+        escalates = try c.decodeIfPresent(Bool.self, forKey: .escalates) ?? escalates
+        cooldownMinutes = try c.decodeIfPresent(Int.self, forKey: .cooldownMinutes) ?? cooldownMinutes
+        annoyedAt = try c.decodeIfPresent(Int.self, forKey: .annoyedAt) ?? annoyedAt
+        brutalAt = try c.decodeIfPresent(Int.self, forKey: .brutalAt) ?? brutalAt
+        selection = try c.decodeIfPresent(FamilyActivitySelection.self, forKey: .selection) ?? selection
+    }
 }
 
 /// Written by the shield extensions only.
