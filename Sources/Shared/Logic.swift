@@ -18,14 +18,31 @@ enum Logic {
         return max(base, tier(openNumber: openNumber, annoyedAt: annoyedAt, brutalAt: brutalAt))
     }
 
-    /// The shield extension can't remember what it showed last, so the line rotates with the open number:
-    /// first open of the day gets line 1 of the tier, second gets line 2, and so on, wrapping around.
-    static func pickQuestion(pack: [Question], tier: Tier, openNumber: Int) -> Question? {
+    /// A random line from the tier (falling back to a lower tier, then anything). The shield extension can't
+    /// remember what it showed last, so a repeat now and then is the price of randomness.
+    static func pickQuestion<G: RandomNumberGenerator>(pack: [Question], tier: Tier, using rng: inout G) -> Question? {
         guard !pack.isEmpty else { return nil }
         var candidates = pack.filter { $0.tier == tier }
         if candidates.isEmpty { candidates = pack.filter { $0.tier < tier } }
         if candidates.isEmpty { candidates = pack }
-        return candidates[(max(openNumber, 1) - 1) % candidates.count]
+        return candidates.randomElement(using: &rng)
+    }
+
+    struct HourCount: Identifiable {
+        let hour: Int
+        var opened: Int
+        var stopped: Int
+        var id: Int { hour }
+    }
+
+    /// Asks per hour of day, all time.
+    static func hourCounts(events: [CheckIn], calendar: Calendar = .current) -> [HourCount] {
+        var counts = (0..<24).map { HourCount(hour: $0, opened: 0, stopped: 0) }
+        for event in events {
+            let h = calendar.component(.hour, from: event.at)
+            if event.decision == .proceed { counts[h].opened += 1 } else { counts[h].stopped += 1 }
+        }
+        return counts
     }
 
     enum ShieldStep { case through, close }

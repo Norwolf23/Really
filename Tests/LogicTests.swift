@@ -64,22 +64,36 @@ final class LogicTests: XCTestCase {
     ]
 
     func testPickReturnsNilForEmptyPool() {
-        XCTAssertNil(Logic.pickQuestion(pack: [], tier: .normal, openNumber: 1))
+        var rng = SystemRandomNumberGenerator()
+        XCTAssertNil(Logic.pickQuestion(pack: [], tier: .normal, using: &rng))
     }
 
-    func testPickRotatesThroughTierByOpenNumber() {
-        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 1)?.id, "n0")
-        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 2)?.id, "n1")
-        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 3)?.id, "n0")
-        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 0)?.id, "n0")
-        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, openNumber: 7)?.id, "a0")
+    func testPickIsRandomWithinTier() {
+        var rng = SystemRandomNumberGenerator()
+        var seen: Set<String> = []
+        for _ in 0..<60 {
+            let q = Logic.pickQuestion(pack: pack, tier: .normal, using: &rng)
+            XCTAssertEqual(q?.tier, .normal)
+            seen.insert(q?.id ?? "")
+        }
+        XCTAssertEqual(seen, ["n0", "n1"])
     }
 
     func testPickFallsBackToLowerTierThenAnything() {
+        var rng = SystemRandomNumberGenerator()
         let onlyNormal = pack.filter { $0.tier == .normal }
-        XCTAssertEqual(Logic.pickQuestion(pack: onlyNormal, tier: .brutal, openNumber: 1)?.tier, .normal)
+        XCTAssertEqual(Logic.pickQuestion(pack: onlyNormal, tier: .brutal, using: &rng)?.tier, .normal)
         let onlyBrutal = pack.filter { $0.tier == .brutal }
-        XCTAssertEqual(Logic.pickQuestion(pack: onlyBrutal, tier: .normal, openNumber: 1)?.id, "b0")
+        XCTAssertEqual(Logic.pickQuestion(pack: onlyBrutal, tier: .normal, using: &rng)?.id, "b0")
+    }
+
+    func testHourCounts() {
+        let counts = Logic.hourCounts(events: [at(hour: 9), at(hour: 9, .no), at(hour: 23)], calendar: cal)
+        XCTAssertEqual(counts.count, 24)
+        XCTAssertEqual(counts[9].opened, 1)
+        XCTAssertEqual(counts[9].stopped, 1)
+        XCTAssertEqual(counts[23].opened, 1)
+        XCTAssertEqual(counts[0].opened + counts[0].stopped, 0)
     }
 
     // MARK: shield rounds
