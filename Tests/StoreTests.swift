@@ -39,7 +39,6 @@ final class StoreTests: XCTestCase {
             store.settings.hasOnboarded = true
             store.settings.cooldownMinutes = 45
             store.state.cooldowns[ig] = now
-            store.state.lastQuestion[ig] = "q1"
         }
         let reloaded = Store(directory: dir)
         XCTAssertEqual(reloaded.events.count, 1)
@@ -50,7 +49,6 @@ final class StoreTests: XCTestCase {
         XCTAssertTrue(reloaded.settings.hasOnboarded)
         XCTAssertEqual(reloaded.settings.cooldownMinutes, 45)
         XCTAssertEqual(reloaded.state.cooldowns[ig]?.timeIntervalSince1970 ?? 0, now.timeIntervalSince1970, accuracy: 1)
-        XCTAssertEqual(reloaded.state.lastQuestion[ig], "q1")
     }
 
     /// The extensions write events.json and state.json while the app is backgrounded; reload() picks them up.

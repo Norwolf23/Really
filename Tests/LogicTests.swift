@@ -64,35 +64,22 @@ final class LogicTests: XCTestCase {
     ]
 
     func testPickReturnsNilForEmptyPool() {
-        var rng = SystemRandomNumberGenerator()
-        XCTAssertNil(Logic.pickQuestion(pack: [], tier: .normal, lastID: nil, using: &rng))
+        XCTAssertNil(Logic.pickQuestion(pack: [], tier: .normal, openNumber: 1))
     }
 
-    func testPickStaysInTier() {
-        var rng = SystemRandomNumberGenerator()
-        for _ in 0..<20 {
-            XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, lastID: nil, using: &rng)?.tier, .annoyed)
-        }
+    func testPickRotatesThroughTierByOpenNumber() {
+        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 1)?.id, "n0")
+        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 2)?.id, "n1")
+        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 3)?.id, "n0")
+        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, openNumber: 0)?.id, "n0")
+        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, openNumber: 7)?.id, "a0")
     }
 
     func testPickFallsBackToLowerTierThenAnything() {
-        var rng = SystemRandomNumberGenerator()
         let onlyNormal = pack.filter { $0.tier == .normal }
-        XCTAssertEqual(Logic.pickQuestion(pack: onlyNormal, tier: .brutal, lastID: nil, using: &rng)?.tier, .normal)
+        XCTAssertEqual(Logic.pickQuestion(pack: onlyNormal, tier: .brutal, openNumber: 1)?.tier, .normal)
         let onlyBrutal = pack.filter { $0.tier == .brutal }
-        XCTAssertEqual(Logic.pickQuestion(pack: onlyBrutal, tier: .normal, lastID: nil, using: &rng)?.id, "b0")
-    }
-
-    func testPickAvoidsLastShown() {
-        var rng = SystemRandomNumberGenerator()
-        for _ in 0..<20 {
-            XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .normal, lastID: "n0", using: &rng)?.id, "n1")
-        }
-    }
-
-    func testPickRepeatsWhenOnlyOneCandidate() {
-        var rng = SystemRandomNumberGenerator()
-        XCTAssertEqual(Logic.pickQuestion(pack: pack, tier: .annoyed, lastID: "a0", using: &rng)?.id, "a0")
+        XCTAssertEqual(Logic.pickQuestion(pack: onlyBrutal, tier: .normal, openNumber: 1)?.id, "b0")
     }
 
     // MARK: shield rounds
@@ -125,35 +112,22 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(Logic.scheduleMinutes(setting: 60), 61)
     }
 
-    // MARK: streak
+    // MARK: per-app counts
 
     func daysAgo(_ d: Int, _ decision: Decision = .no) -> CheckIn {
         CheckIn(appID: ig, at: cal.date(byAdding: .day, value: -d, to: now)!, decision: decision)
     }
 
-    func testStreakZeroWithNoEvents() {
-        XCTAssertEqual(Logic.streak(events: [], now: now, calendar: cal), 0)
-    }
-
-    func testStreakCountsConsecutiveDaysEndingToday() {
-        XCTAssertEqual(Logic.streak(events: [daysAgo(0), daysAgo(1), daysAgo(2)], now: now, calendar: cal), 3)
-    }
-
-    func testStreakSurvivesWhenTodayHasNoNoYet() {
-        XCTAssertEqual(Logic.streak(events: [daysAgo(1), daysAgo(2)], now: now, calendar: cal), 2)
-    }
-
-    func testStreakBreaksOnGap() {
-        XCTAssertEqual(Logic.streak(events: [daysAgo(0), daysAgo(2), daysAgo(3)], now: now, calendar: cal), 1)
-    }
-
-    func testStreakIgnoresContinueEvents() {
-        XCTAssertEqual(Logic.streak(events: [daysAgo(0, .proceed), daysAgo(1)], now: now, calendar: cal), 1)
-        XCTAssertEqual(Logic.streak(events: [daysAgo(0, .proceed), daysAgo(1, .proceed)], now: now, calendar: cal), 0)
-    }
-
-    func testStreakZeroWhenLastNoWasTwoDaysAgo() {
-        XCTAssertEqual(Logic.streak(events: [daysAgo(2), daysAgo(3)], now: now, calendar: cal), 0)
+    func testAppCountsTriedOpenedStopped() {
+        let events = [event(ig, minutesAgo: 1), event(ig, minutesAgo: 2, .proceed), event(ig, minutesAgo: 3, .proceed), event(tt, minutesAgo: 4)]
+        let counts = Logic.appCounts(events: events)
+        XCTAssertEqual(counts.map(\.id), [ig, tt])
+        XCTAssertEqual(counts[0].tried, 3)
+        XCTAssertEqual(counts[0].opened, 2)
+        XCTAssertEqual(counts[0].stopped, 1)
+        XCTAssertEqual(counts[0].stoppedShare ?? 0, 1.0 / 3.0, accuracy: 0.001)
+        XCTAssertEqual(counts[1].stoppedShare, 1)
+        XCTAssertTrue(Logic.appCounts(events: []).isEmpty)
     }
 
     // MARK: daily counts

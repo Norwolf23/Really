@@ -20,13 +20,25 @@ struct SettingsView: View {
                     Text("Counts each app's opens today against the thresholds below.")
                 }
                 Section {
-                    Stepper("Ask again after: \(store.settings.cooldownMinutes) min", value: $store.settings.cooldownMinutes, in: 15...240, step: 15)
-                    Stepper("Annoyed from open #\(store.settings.annoyedAt)", value: $store.settings.annoyedAt, in: 1...50)
+                    Picker("Ask again after", selection: $store.settings.cooldownMinutes) {
+                        Text("As soon as iOS allows (about 16 min)").tag(15)
+                        Text("1 hour").tag(60)
+                        Text("3 hours").tag(180)
+                        Text("6 hours").tag(360)
+                        Text("12 hours").tag(720)
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                } header: {
+                    Text("Ask again after")
+                } footer: {
+                    Text("Once you go through, the question stays away this long, then the shield is back.")
+                }
+                Section {
+                    Stepper("Mean from open #\(store.settings.annoyedAt)", value: $store.settings.annoyedAt, in: 1...50)
                     Stepper("Brutal from open #\(store.settings.brutalAt)", value: $store.settings.brutalAt, in: 1...50)
                 } header: {
-                    Text("Friction")
-                } footer: {
-                    Text("Once you go through, the question stays away this long. 15 min is the shortest iOS allows.")
+                    Text("Escalation")
                 }
                 Section("Intro") {
                     Button("Replay intro") { store.settings.hasOnboarded = false }

@@ -20,6 +20,10 @@ struct Question: Codable, Identifiable, Hashable {
     var id: String
     var text: String
     var tier: Tier
+    /// First reply: an admission, closes the app.
+    var yes = "Yea, I am"
+    /// Second reply: a reason, lets you in.
+    var no = "Nope, I've got a reason to be here"
 }
 
 /// One shield answer. `appID` is the app's opaque token, base64-encoded (see `TokenID`); the app renders it with `Label(token)`.
@@ -71,7 +75,6 @@ struct Settings: Codable, Equatable {
 /// Written by the shield extensions only.
 struct ShieldState: Codable, Equatable {
     var cooldowns: [String: Date] = [:]
-    var lastQuestion: [String: String] = [:]
     /// Diagnostic: which button the action extension last handled.
     var lastAction: String? = nil
 }

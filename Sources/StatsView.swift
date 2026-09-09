@@ -8,16 +8,13 @@ struct StatsView: View {
         let now = Date()
         let today = store.events.filter { Calendar.current.isDateInToday($0.at) }
         let days = Logic.dailyCounts(events: store.events, days: 7, now: now)
-        let perApp = Dictionary(grouping: today, by: \.appID)
+        let counts = Logic.appCounts(events: store.events)
         NavigationStack {
             List {
                 Section("Today") {
                     row("Asked", today.count)
                     row("Said no", today.filter { $0.decision == .no }.count)
                     row("Went through", today.filter { $0.decision == .proceed }.count)
-                }
-                Section("Streak") {
-                    row("Days in a row with a no", Logic.streak(events: store.events, now: now))
                 }
                 Section("Last 7 days") {
                     Chart {
@@ -45,21 +42,39 @@ struct StatsView: View {
                 Section("Log") {
                     NavigationLink("All check-ins") { LogView() }
                 }
-                if !perApp.isEmpty {
-                    Section("Per app, today") {
-                        ForEach(perApp.keys.sorted(), id: \.self) { id in
-                            let mine = perApp[id] ?? []
-                            HStack {
-                                AppLabel(id: id)
-                                Spacer()
-                                Text("\(mine.filter { $0.decision == .no }.count) no · \(mine.filter { $0.decision == .proceed }.count) through")
-                                    .foregroundStyle(.secondary)
+                if !counts.isEmpty {
+                    Section {
+                        ForEach(counts) { app in
+                            VStack(alignment: .leading, spacing: 6) {
+                                AppLabel(id: app.id)
+                                HStack(spacing: 16) {
+                                    counter("Tried to open", app.tried)
+                                    counter("Actually opened", app.opened)
+                                    counter("Stopped", app.stopped)
+                                    Spacer()
+                                    if let share = app.stoppedShare {
+                                        Text(share, format: .percent.precision(.fractionLength(0)))
+                                            .font(.title3.bold().monospacedDigit())
+                                    }
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
+                    } header: {
+                        Text("Per app, all time")
+                    } footer: {
+                        Text("The percentage is how often the question ended with the app closed.")
                     }
                 }
             }
             .navigationTitle("Stats")
+        }
+    }
+
+    private func counter(_ label: String, _ number: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(number)").font(.headline.monospacedDigit())
+            Text(label).font(.caption2).foregroundStyle(.secondary)
         }
     }
 

@@ -14,11 +14,13 @@ final class ModelsTests: XCTestCase {
     }
 
     func testCatalogHasEightAppsWithPacks() {
-        XCTAssertEqual(Catalog.packs.count, 8)
-        for (bundleID, pack) in Catalog.packs {
-            XCTAssertNotNil(Bundle.main.url(forResource: "pack-" + pack, withExtension: "json"), bundleID)
+        XCTAssertEqual(Catalog.entries.count, 8)
+        for entry in Catalog.entries {
+            XCTAssertNotNil(Bundle.main.url(forResource: "pack-" + entry.pack, withExtension: "json"), entry.bundleID)
+            XCTAssertTrue(entry.scheme.hasSuffix("://"), entry.name)
         }
         XCTAssertEqual(Catalog.pack(for: "com.burbn.instagram"), "instagram")
+        XCTAssertEqual(Catalog.entries.first?.name, "Instagram")
     }
 
     func testUnknownBundleIDFallsBackToGeneric() {
@@ -63,10 +65,9 @@ final class ModelsTests: XCTestCase {
     }
 
     func testShieldStateDefaultsAndRoundTrip() throws {
-        XCTAssertEqual(ShieldState(), ShieldState(cooldowns: [:], lastQuestion: [:], lastAction: nil))
+        XCTAssertEqual(ShieldState(), ShieldState(cooldowns: [:], lastAction: nil))
         var state = ShieldState()
         state.cooldowns["com.burbn.instagram"] = Date(timeIntervalSince1970: 1_800_000_000)
-        state.lastQuestion["com.burbn.instagram"] = "pack-instagram.normal.0"
         state.lastAction = "Nope 9:41"
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .secondsSince1970
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .secondsSince1970

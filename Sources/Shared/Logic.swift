@@ -18,13 +18,14 @@ enum Logic {
         return max(base, tier(openNumber: openNumber, annoyedAt: annoyedAt, brutalAt: brutalAt))
     }
 
-    static func pickQuestion<G: RandomNumberGenerator>(pack: [Question], tier: Tier, lastID: String?, using rng: inout G) -> Question? {
+    /// The shield extension can't remember what it showed last, so the line rotates with the open number:
+    /// first open of the day gets line 1 of the tier, second gets line 2, and so on, wrapping around.
+    static func pickQuestion(pack: [Question], tier: Tier, openNumber: Int) -> Question? {
         guard !pack.isEmpty else { return nil }
         var candidates = pack.filter { $0.tier == tier }
         if candidates.isEmpty { candidates = pack.filter { $0.tier < tier } }
         if candidates.isEmpty { candidates = pack }
-        if candidates.count > 1 { candidates.removeAll { $0.id == lastID } }
-        return candidates.randomElement(using: &rng)
+        return candidates[(max(openNumber, 1) - 1) % candidates.count]
     }
 
     enum ShieldStep { case through, close }
@@ -51,19 +52,21 @@ enum Logic {
         max(15, setting) + 1
     }
 
-    static func streak(events: [CheckIn], now: Date, calendar: Calendar = .current) -> Int {
-        let noDays = Set(events.filter { $0.decision == .no }.map { calendar.startOfDay(for: $0.at) })
-        let today = calendar.startOfDay(for: now)
-        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else { return 0 }
-        var day: Date
-        if noDays.contains(today) { day = today } else if noDays.contains(yesterday) { day = yesterday } else { return 0 }
-        var count = 0
-        while noDays.contains(day) {
-            count += 1
-            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
-            day = previous
+    struct AppCount: Identifiable, Equatable {
+        let id: String
+        var tried: Int   // every time the shield asked
+        var opened: Int  // times the answer let them in
+        var stopped: Int { tried - opened }
+        /// Share of asks that ended with the app closed. Nil until the app has been asked once.
+        var stoppedShare: Double? { tried == 0 ? nil : Double(stopped) / Double(tried) }
+    }
+
+    /// Per app, most-tried first.
+    static func appCounts(events: [CheckIn]) -> [AppCount] {
+        Dictionary(grouping: events, by: \.appID).map { id, mine in
+            AppCount(id: id, tried: mine.count, opened: mine.filter { $0.decision == .proceed }.count)
         }
-        return count
+        .sorted { $0.tried != $1.tried ? $0.tried > $1.tried : $0.id < $1.id }
     }
 
     struct DayCount: Identifiable {

@@ -1,44 +1,53 @@
 {
   "normal": [
-    "Are you here to just doomscroll again?",
-    "What exactly are you hoping to find in there?",
-    "You checked this twenty minutes ago. Anything change?",
-    "Is this a decision or a reflex?",
-    "Name one thing you'll remember from this in an hour.",
-    "Are you bored, or just avoiding something?",
-    "Did someone ask for you, or did your thumb?",
-    "Quick one: what were you doing before this?",
-    "Stories of people you don't talk to. Really?",
-    "You could just... not."
+    {
+      "text": "Are you avoiding something again?",
+      "yes": "Yea, I am",
+      "no": "Nope, I've got a reason to be here"
+    },
+    {
+      "text": "Are you here to doomscroll your problems away?",
+      "yes": "Yeah, probably",
+      "no": "No, I'm posting something"
+    },
+    {
+      "text": "Are you opening this on a reflex?",
+      "yes": "Caught me",
+      "no": "No, I meant to"
+    }
   ],
   "annoyed": [
-    "Again? It's been fifteen minutes.",
-    "Third time today. The feed hasn't missed you.",
-    "Really? What did the last visit do for you?",
-    "This is the one where you say you'll only check one thing.",
-    "You're not looking for anything. You're looking away from something.",
-    "Same reels, same faces, same feeling after. Go on then.",
-    "Your attention is being sold. You're the discount.",
-    "Someone posted a photo of lunch. That's what's waiting.",
-    "You've done this dance today already. Twice.",
-    "Be honest. This is a nervous tic with a logo."
+    {
+      "text": "Again? Are you looking away from something?",
+      "yes": "…yeah",
+      "no": "No, I actually need this"
+    },
+    {
+      "text": "Third time today. Are you still \"just checking one thing\"?",
+      "yes": "It's never one thing",
+      "no": "It really is one thing"
+    },
+    {
+      "text": "Are you back for the same reels, the same faces, the same feeling after?",
+      "yes": "Fine, yes",
+      "no": "No, someone messaged me"
+    }
   ],
   "brutal": [
-    "Really. Again. You're better than this, allegedly.",
-    "Sixth time. The algorithm knows you better than your friends do.",
-    "At this point the app is opening you.",
-    "Congratulations, you've become the engagement metric.",
-    "There is nothing in there. There was nothing last time either.",
-    "Your day is being eaten thirty seconds at a time and you're holding the spoon.",
-    "Imagine explaining today's screen time to yourself at twenty.",
-    "Go ahead. Add another forty minutes you won't remember.",
-    "You already know the answer. You just want permission.",
-    "No, seriously. Really?"
-  ],
-  "reasons": [
-    "Checking one thing",
-    "Someone posted",
-    "Bored",
-    "Avoiding something"
+    {
+      "text": "Sixth time. Are you sure you're the one opening the app?",
+      "yes": "Not sure anymore",
+      "no": "Yes, I'm in control"
+    },
+    {
+      "text": "Are you here to be the engagement metric again?",
+      "yes": "Looks like it",
+      "no": "No, I'm here on purpose"
+    },
+    {
+      "text": "You already know the answer. Are you just here for permission?",
+      "yes": "Yeah. Denied.",
+      "no": "No, I have a reason"
+    }
   ]
 }
