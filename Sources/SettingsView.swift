@@ -35,10 +35,13 @@ struct SettingsView: View {
                     Text("Once you go through, the question stays away this long, then the shield is back.")
                 }
                 Section {
+                    Toggle("Gentle reminders first", isOn: $store.settings.gentleFirst)
                     Stepper("Mean from open #\(store.settings.annoyedAt)", value: $store.settings.annoyedAt, in: 1...50)
                     Stepper("Brutal from open #\(store.settings.brutalAt)", value: $store.settings.brutalAt, in: 1...50)
                 } header: {
                     Text("Escalation")
+                } footer: {
+                    Text("The first four or five opens of an app each day only get a reminder and one button. Questions start after that.")
                 }
                 Section("Intro") {
                     Button("Replay intro") { store.settings.hasOnboarded = false }

@@ -52,8 +52,10 @@ struct Settings: Codable, Equatable {
     var meanness = Tier.normal
     var escalates = true
     var cooldownMinutes = 15 // DeviceActivity schedules can't be shorter than 15 min
-    var annoyedAt = 3
-    var brutalAt = 6
+    var annoyedAt = 10
+    var brutalAt = 15
+    /// The first 4-5 opens of an app each day get a one-button reminder instead of a question.
+    var gentleFirst = true
     /// includeEntireCategory: a ticked category expands into app tokens, so category picks shield something.
     var selection = FamilyActivitySelection(includeEntireCategory: true)
 
@@ -68,6 +70,7 @@ struct Settings: Codable, Equatable {
         cooldownMinutes = try c.decodeIfPresent(Int.self, forKey: .cooldownMinutes) ?? cooldownMinutes
         annoyedAt = try c.decodeIfPresent(Int.self, forKey: .annoyedAt) ?? annoyedAt
         brutalAt = try c.decodeIfPresent(Int.self, forKey: .brutalAt) ?? brutalAt
+        gentleFirst = try c.decodeIfPresent(Bool.self, forKey: .gentleFirst) ?? gentleFirst
         selection = try c.decodeIfPresent(FamilyActivitySelection.self, forKey: .selection) ?? selection
     }
 }

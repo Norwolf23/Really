@@ -45,11 +45,32 @@ enum Logic {
         return counts
     }
 
+    /// Gentle-phase lines: a nudge, one button, no question.
+    static let reminders = [
+        "Careful, don't get lost in the reels.",
+        "Heads-up: the scroll is endless, your afternoon isn't.",
+        "Quick reminder to chill. It'll all still be here later.",
+        "Easy. You don't need to keep opening this.",
+        "Small nudge: notice you're here, then carry on.",
+    ]
+
+    /// How many opens a day get a reminder instead of a question: 4 or 5. Derived from the date, not stored, so the
+    /// read-only config extension and the action extension always agree, and the cutoff shifts day to day.
+    static func gentleLimit(now: Date, calendar: Calendar = .current) -> Int {
+        let day = calendar.ordinality(of: .day, in: .era, for: now) ?? 0
+        return 4 + (((day &* 2_654_435_761) >> 16) & 1)
+    }
+
+    static func isGentle(openNumber: Int, limit: Int, enabled: Bool) -> Bool {
+        enabled && openNumber <= limit
+    }
+
     enum ShieldStep { case through, close }
 
     /// Primary "Yea, I am" kicks you out; secondary "Nope, I've got a reason to be here" lets you in.
-    static func shieldStep(primary: Bool) -> ShieldStep {
-        primary ? .close : .through
+    /// In the gentle phase the only button is "Okay thanks!", which lets you in.
+    static func shieldStep(primary: Bool, gentle: Bool) -> ShieldStep {
+        primary && !gentle ? .close : .through
     }
 
     static func anyCooldownActive(_ cooldowns: [String: Date], now: Date) -> Bool {
