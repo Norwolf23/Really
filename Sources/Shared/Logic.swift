@@ -107,6 +107,30 @@ enum Logic {
         .sorted { $0.tried != $1.tried ? $0.tried > $1.tried : $0.id < $1.id }
     }
 
+    /// Today's asks per app, most first. `tried` is the opens count; the shield is down during a cooldown, so
+    /// re-opens inside one are not seen.
+    static func opensToday(events: [CheckIn], now: Date, calendar: Calendar = .current) -> [AppCount] {
+        appCounts(events: events.filter { calendar.isDate($0.at, inSameDayAs: now) })
+    }
+
+    /// Mean asks per day for one app over the last `days` days, today included.
+    static func averageOpensPerDay(events: [CheckIn], appID: String, days: Int, now: Date, calendar: Calendar = .current) -> Double {
+        guard days > 0, let start = calendar.date(byAdding: .day, value: 1 - days, to: calendar.startOfDay(for: now)) else { return 0 }
+        let count = events.filter { $0.appID == appID && $0.at >= start }.count
+        return Double(count) / Double(days)
+    }
+
+    /// What open number `openNumber` gets: "gentle", "questions", "mean" or "brutal".
+    static func stage(openNumber: Int, settings: Settings, now: Date, calendar: Calendar = .current) -> String {
+        if isGentle(openNumber: openNumber, limit: gentleLimit(now: now, calendar: calendar), enabled: settings.gentleFirst) { return "gentle" }
+        switch effectiveTier(base: settings.meanness, openNumber: openNumber, annoyedAt: settings.annoyedAt,
+                             brutalAt: settings.brutalAt, escalates: settings.escalates) {
+        case .normal: return "questions"
+        case .annoyed: return "mean"
+        case .brutal: return "brutal"
+        }
+    }
+
     struct DayCount: Identifiable {
         let day: Date
         var proceeds: Int
