@@ -8,8 +8,29 @@ struct StatsView: View {
         let counts = Logic.appCounts(events: store.events)
         let tried = counts.reduce(0) { $0 + $1.tried }
         let opened = counts.reduce(0) { $0 + $1.opened }
+        let today = Logic.opensToday(events: store.events, now: .now)
         NavigationStack {
             List {
+                Section {
+                    if today.isEmpty {
+                        Text("No opens yet today").foregroundStyle(.secondary)
+                    }
+                    ForEach(today) { app in
+                        HStack {
+                            AppLabel(id: app.id)
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 0) {
+                                Text("\(app.tried)").font(.title2.bold().monospacedDigit())
+                                Text("next: \(Logic.stage(openNumber: app.tried + 1, settings: store.settings, now: .now))")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Opens today")
+                } footer: {
+                    Text("Times Really asked. Opens while the question was paused after a go-through aren't counted.")
+                }
                 Section {
                     Overview(tried: tried, opened: opened)
                 } footer: {
@@ -20,7 +41,9 @@ struct StatsView: View {
                 }
                 if !counts.isEmpty {
                     Section("Per app") {
-                        ForEach(counts) { AppRow(app: $0) }
+                        ForEach(counts) {
+                            AppRow(app: $0, perDay: Logic.averageOpensPerDay(events: store.events, appID: $0.id, days: 7, now: .now))
+                        }
                     }
                 }
                 if tried > 0 {
@@ -109,6 +132,7 @@ private struct WeekChart: View {
 
 private struct AppRow: View {
     let app: Logic.AppCount
+    let perDay: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -131,7 +155,7 @@ private struct AppRow: View {
             .chartYAxis(.hidden)
             .chartLegend(.hidden)
             .frame(height: 14)
-            Text("\(app.tried) tried · \(app.opened) opened · \(app.stopped) stopped")
+            Text("\(app.tried) tried · \(app.opened) opened · \(app.stopped) stopped · \(perDay, format: .number.precision(.fractionLength(1)))/day this week")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)

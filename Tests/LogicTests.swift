@@ -172,6 +172,39 @@ final class LogicTests: XCTestCase {
 
     // MARK: daily counts
 
+    func testOpensTodayCountsOnlyTodayPerAppMostFirst() {
+        let events = [
+            event(ig, minutesAgo: 5), event(ig, minutesAgo: 10, .proceed), event(ig, minutesAgo: 48 * 60),
+            event(tt, minutesAgo: 5),
+        ]
+        let today = Logic.opensToday(events: events, now: now, calendar: cal)
+        XCTAssertEqual(today.map(\.id), [ig, tt])
+        XCTAssertEqual(today.map(\.tried), [2, 1])
+        XCTAssertTrue(Logic.opensToday(events: [], now: now, calendar: cal).isEmpty)
+    }
+
+    func testAverageOpensPerDayOverWindow() {
+        let events = [
+            event(ig, minutesAgo: 5), event(ig, minutesAgo: 10), event(ig, minutesAgo: 48 * 60),
+            event(ig, minutesAgo: 30 * 24 * 60), // outside the window
+            event(tt, minutesAgo: 5),
+        ]
+        XCTAssertEqual(Logic.averageOpensPerDay(events: events, appID: ig, days: 7, now: now, calendar: cal), 3.0 / 7, accuracy: 0.001)
+        XCTAssertEqual(Logic.averageOpensPerDay(events: events, appID: "nobody", days: 7, now: now, calendar: cal), 0)
+    }
+
+    func testStageLabelFollowsGentleThenTiers() {
+        var s = Settings()
+        s.annoyedAt = 10; s.brutalAt = 15
+        let limit = Logic.gentleLimit(now: now, calendar: cal)
+        XCTAssertEqual(Logic.stage(openNumber: limit, settings: s, now: now, calendar: cal), "gentle")
+        XCTAssertEqual(Logic.stage(openNumber: limit + 1, settings: s, now: now, calendar: cal), "questions")
+        XCTAssertEqual(Logic.stage(openNumber: 10, settings: s, now: now, calendar: cal), "mean")
+        XCTAssertEqual(Logic.stage(openNumber: 15, settings: s, now: now, calendar: cal), "brutal")
+        s.gentleFirst = false
+        XCTAssertEqual(Logic.stage(openNumber: 1, settings: s, now: now, calendar: cal), "questions")
+    }
+
     func testDailyCountsCoverRequestedDaysOldestFirst() {
         let events = [daysAgo(0), daysAgo(0, .proceed), daysAgo(1), daysAgo(6), daysAgo(7)]
         let days = Logic.dailyCounts(events: events, days: 7, now: now, calendar: cal)
