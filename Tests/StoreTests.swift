@@ -39,8 +39,11 @@ final class StoreTests: XCTestCase {
             store.settings.hasOnboarded = true
             store.settings.cooldownMinutes = 45
             store.state.cooldowns[ig] = now
+            store.custom[ig] = CustomPack(base: "instagram", questions: [Question(id: "custom.1", text: "Mine?", tier: .brutal)])
         }
         let reloaded = Store(directory: dir)
+        XCTAssertEqual(reloaded.custom[ig]?.base, "instagram")
+        XCTAssertEqual(reloaded.custom[ig]?.questions.map(\.text), ["Mine?"])
         XCTAssertEqual(reloaded.events.count, 1)
         XCTAssertEqual(reloaded.events[0].decision, .no)
         XCTAssertEqual(reloaded.events[0].at.timeIntervalSince1970, now.timeIntervalSince1970, accuracy: 1)
