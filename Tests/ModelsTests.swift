@@ -65,6 +65,15 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(back, s)
     }
 
+    func testCustomPackSeedsFromBuiltInAndRoundTrips() throws {
+        let pack = CustomPack(base: "instagram")
+        XCTAssertEqual(pack.questions.map(\.id).first, "pack-instagram.normal.0")
+        XCTAssertEqual(pack.questions.count, 9)
+        let back = try JSONDecoder().decode(CustomPack.self, from: JSONEncoder().encode(pack))
+        XCTAssertEqual(back, pack)
+        XCTAssertEqual(CustomPack.bases, ["instagram", "tiktok", "snapchat", "youtube", "generic"])
+    }
+
     func testShieldStateDefaultsAndRoundTrip() throws {
         XCTAssertEqual(ShieldState(), ShieldState(cooldowns: [:], lastAction: nil))
         var state = ShieldState()

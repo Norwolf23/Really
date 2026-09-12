@@ -2,7 +2,7 @@ import Foundation
 import os
 
 /// All state. Three JSON files in the App Group, each rewritten whole by its own writer:
-/// settings.json (app), events.json and state.json (shield extensions). The app reloads on foreground.
+/// settings.json and custom.json (app), events.json and state.json (shield extensions). The app reloads on foreground.
 /// ponytail: fine for a few events a day; move to SwiftData if events.json passes a few MB.
 final class Store: ObservableObject {
     static let shared = Store()
@@ -13,10 +13,12 @@ final class Store: ObservableObject {
     @Published var events: [CheckIn] { didSet { save(events, to: eventsURL) } }
     @Published var settings: Settings { didSet { save(settings, to: settingsURL) } }
     @Published var state: ShieldState { didSet { save(state, to: stateURL) } }
+    @Published var custom: [String: CustomPack] { didSet { save(custom, to: customURL) } }
 
     private let eventsURL: URL
     private let settingsURL: URL
     private let stateURL: URL
+    private let customURL: URL
     /// Files that exist but didn't decode (most likely a torn read of another process's write). Never overwritten.
     private(set) var unreadable: Set<URL> = []
     private var loading = false
@@ -38,9 +40,11 @@ final class Store: ObservableObject {
         eventsURL = directory.appendingPathComponent("events.json")
         settingsURL = directory.appendingPathComponent("settings.json")
         stateURL = directory.appendingPathComponent("state.json")
+        customURL = directory.appendingPathComponent("custom.json")
         events = []
         settings = Settings()
         state = ShieldState()
+        custom = [:]
         reload(settingsToo: true)
     }
 
@@ -50,7 +54,10 @@ final class Store: ObservableObject {
         defer { loading = false }
         events = load([CheckIn].self, from: eventsURL) ?? []
         state = load(ShieldState.self, from: stateURL) ?? ShieldState()
-        if settingsToo { settings = load(Settings.self, from: settingsURL) ?? Settings() }
+        if settingsToo {
+            settings = load(Settings.self, from: settingsURL) ?? Settings()
+            custom = load([String: CustomPack].self, from: customURL) ?? [:]
+        }
     }
 
     func record(_ decision: Decision, app id: String, now: Date = .now) {

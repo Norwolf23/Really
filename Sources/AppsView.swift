@@ -11,7 +11,9 @@ struct AppsView: View {
         NavigationStack {
             List {
                 ForEach(tokens, id: \.self) { token in
-                    Label(token).labelStyle(.titleAndIcon)
+                    NavigationLink { MessagesView(id: TokenID.string(token), token: token) } label: {
+                        Label(token).labelStyle(.titleAndIcon)
+                    }
                 }
             }
             .overlay {

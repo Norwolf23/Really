@@ -75,6 +75,21 @@ struct Settings: Codable, Equatable {
     }
 }
 
+/// One app's own question list, keyed by `TokenID` in `Store.custom`. Written by the app; the shield uses it
+/// instead of the built-in pack whenever it exists. The app can't learn which app a token is, so the user
+/// picks the `base` pack once and the list starts as a copy of it.
+struct CustomPack: Codable, Equatable {
+    static let bases = ["instagram", "tiktok", "snapchat", "youtube", "generic"]
+
+    var base: String
+    var questions: [Question]
+
+    init(base: String, questions: [Question]? = nil) {
+        self.base = base
+        self.questions = questions ?? Packs.questions(for: base)
+    }
+}
+
 /// Written by the shield extensions only.
 struct ShieldState: Codable, Equatable {
     var cooldowns: [String: Date] = [:]
