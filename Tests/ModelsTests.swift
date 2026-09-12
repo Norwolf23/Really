@@ -55,11 +55,12 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(defaults.meanness, .normal)
         XCTAssertTrue(defaults.escalates)
         XCTAssertEqual(defaults.cooldownMinutes, 15)
-        XCTAssertEqual(defaults.annoyedAt, 3)
-        XCTAssertEqual(defaults.brutalAt, 6)
+        XCTAssertEqual(defaults.annoyedAt, 10)
+        XCTAssertEqual(defaults.brutalAt, 15)
+        XCTAssertTrue(defaults.gentleFirst)
         XCTAssertTrue(defaults.selection.applicationTokens.isEmpty)
         var s = defaults
-        s.hasOnboarded = true; s.meanness = .brutal; s.escalates = false; s.cooldownMinutes = 30
+        s.hasOnboarded = true; s.meanness = .brutal; s.escalates = false; s.cooldownMinutes = 30; s.gentleFirst = false
         let back = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(s))
         XCTAssertEqual(back, s)
     }

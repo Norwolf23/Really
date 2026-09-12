@@ -23,7 +23,7 @@ iOS now shows the Really? shield whenever one of those apps opens. **No** closes
 
 Three app extensions share one App Group with the app:
 
-- `ShieldConfig` picks the tier (Mild/Mean/Brutal, escalating with today's opens) and a line from the app's pack, and draws the shield.
+- `ShieldConfig` shows a one-button reminder for the first 4-5 opens of an app each day, then picks the tier (Mild/Mean/Brutal, escalating with today's opens) and a line from the app's pack, and draws the shield.
 - `ShieldAction` handles the buttons: logs the answer, lifts the shield and schedules the cooldown.
 - `Monitor` puts the shield back when the cooldown ends.
 

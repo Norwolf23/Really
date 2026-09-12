@@ -99,8 +99,34 @@ final class LogicTests: XCTestCase {
     // MARK: shield rounds
 
     func testShieldStep() {
-        XCTAssertEqual(Logic.shieldStep(primary: true), .close)     // Yea, I am
-        XCTAssertEqual(Logic.shieldStep(primary: false), .through)  // Nope, I've got a reason to be here
+        XCTAssertEqual(Logic.shieldStep(primary: true, gentle: false), .close)     // Yea, I am
+        XCTAssertEqual(Logic.shieldStep(primary: false, gentle: false), .through)  // Nope, I've got a reason to be here
+        XCTAssertEqual(Logic.shieldStep(primary: true, gentle: true), .through)    // Okay thanks!
+    }
+
+    // MARK: gentle phase
+
+    func testGentleLimitIsFourOrFiveAndVariesByDay() {
+        var seen = Set<Int>()
+        for day in 0..<60 {
+            let limit = Logic.gentleLimit(now: now.addingTimeInterval(Double(day) * 86_400), calendar: cal)
+            XCTAssertTrue((4...5).contains(limit))
+            seen.insert(limit)
+        }
+        XCTAssertEqual(seen, [4, 5])
+    }
+
+    func testGentleLimitIsStableWithinADay() {
+        let morning = cal.startOfDay(for: now).addingTimeInterval(3_600)
+        let night = cal.startOfDay(for: now).addingTimeInterval(23 * 3_600)
+        XCTAssertEqual(Logic.gentleLimit(now: morning, calendar: cal), Logic.gentleLimit(now: night, calendar: cal))
+    }
+
+    func testIsGentleUpToTheLimitUnlessTurnedOff() {
+        XCTAssertTrue(Logic.isGentle(openNumber: 1, limit: 4, enabled: true))
+        XCTAssertTrue(Logic.isGentle(openNumber: 4, limit: 4, enabled: true))
+        XCTAssertFalse(Logic.isGentle(openNumber: 5, limit: 4, enabled: true))
+        XCTAssertFalse(Logic.isGentle(openNumber: 1, limit: 4, enabled: false))
     }
 
     // MARK: cooldowns
