@@ -5,6 +5,7 @@ struct LogView: View {
     @State private var appFilter: String?
 
     var body: some View {
+        let ids = Set(store.events.map(\.appID)).sorted()
         let events = store.events.filter { appFilter == nil || $0.appID == appFilter }
         let groups = Logic.groupedByDay(events: events)
         List {
@@ -15,12 +16,8 @@ struct LogView: View {
                             Text(event.at.formatted(date: .omitted, time: .shortened))
                                 .monospacedDigit()
                                 .foregroundStyle(.secondary)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("\(store.app(event.appID)?.name ?? event.appID) · \(event.decision == .no ? "Said no" : "Went through")")
-                                if let reason = event.reason, !reason.isEmpty {
-                                    Text(reason).font(.caption).foregroundStyle(.secondary)
-                                }
-                            }
+                            AppLabel(id: event.appID)
+                            Text(event.decision == .no ? "Said no" : "Went through").foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -28,15 +25,15 @@ struct LogView: View {
         }
         .overlay {
             if groups.isEmpty {
-                ContentUnavailableView("Nothing yet", systemImage: "clock", description: Text("Check-ins show up here."))
+                ContentUnavailableView("Nothing yet", systemImage: "clock", description: Text("Shield answers show up here."))
             }
         }
         .navigationTitle("Log")
         .toolbar {
             Menu {
                 Button("All apps") { appFilter = nil }
-                ForEach(store.apps) { app in
-                    Button(app.name) { appFilter = app.id }
+                ForEach(ids, id: \.self) { id in
+                    Button { appFilter = id } label: { AppLabel(id: id) }
                 }
             } label: {
                 Image(systemName: "line.3.horizontal.decrease.circle")

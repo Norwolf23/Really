@@ -1,44 +1,53 @@
 {
   "normal": [
-    "Just one video, or is that never actually true?",
-    "What are you here to watch, specifically?",
-    "Is this the video you opened the app for?",
-    "How many recommended videos will you fall for tonight?",
-    "Did you come here with a question, or just time to kill?",
-    "Quick check: is this the last tab before bed, or the first of many?",
-    "You could close this and actually finish the thing you were doing.",
-    "Name the video that brought you back this time.",
-    "Is autoplay doing the deciding here?",
-    "Was this five minutes planned, or just happening to you?"
+    {
+      "text": "Are you here for one video, knowing that's never true?",
+      "yes": "Never true",
+      "no": "One video, I promise"
+    },
+    {
+      "text": "Are you letting autoplay decide this?",
+      "yes": "Autoplay's driving",
+      "no": "No, I picked this one"
+    },
+    {
+      "text": "Are you here with time to kill, not a question?",
+      "yes": "Time to kill",
+      "no": "No, I've got a question"
+    }
   ],
   "annoyed": [
-    "Again? That one video became six.",
-    "Third time today. Autoplay is basically driving now.",
-    "You said one video. That was an hour ago.",
-    "The next video is already loading. You didn't ask it to.",
-    "You clicked the thumbnail. The thumbnail won.",
-    "Nothing in the last four videos was worth the time. The fifth is loading anyway.",
-    "You keep meaning to close the tab after this one. This one never ends.",
-    "Same rabbit hole, different day. Go on then.",
-    "The next video queued itself before you decided anything.",
-    "You're not watching anymore. You're being played, next up."
+    {
+      "text": "Again? Are you back after that one video became six?",
+      "yes": "Six and counting",
+      "no": "No, one specific thing"
+    },
+    {
+      "text": "Are you about to click the thumbnail that always wins?",
+      "yes": "It always wins",
+      "no": "Not this time"
+    },
+    {
+      "text": "Are you still meaning to close it after this one?",
+      "yes": "Still meaning to",
+      "no": "I actually will"
+    }
   ],
   "brutal": [
-    "One video was a lie you told yourself an hour ago.",
-    "You've let autoplay make more decisions today than you have.",
-    "There is always a next video. That is the whole business model.",
-    "Your evening is a related-videos sidebar now.",
-    "Congratulations, you watched a stranger's whole life update in real time.",
-    "Imagine if you'd finished anything else with this attention.",
-    "Go ahead. Let the next unskippable hour start itself.",
-    "You already know the video won't matter tomorrow. Press play anyway.",
-    "This is what one video looks like from the outside. It looks like tonight.",
-    "No, seriously. Really?"
-  ],
-  "reasons": [
-    "One video, then done",
-    "Something to eat to",
-    "Bored",
-    "Avoiding something"
+    {
+      "text": "Are you handing autoplay another hour of your decisions?",
+      "yes": "Handing it over",
+      "no": "No, I'm in charge tonight"
+    },
+    {
+      "text": "Are you turning tonight into a related-videos sidebar?",
+      "yes": "Looks like it",
+      "no": "No, I'm looking something up"
+    },
+    {
+      "text": "Are you pressing play on a video you already know won't matter tomorrow?",
+      "yes": "Pressing play",
+      "no": "No, this one matters"
+    }
   ]
 }

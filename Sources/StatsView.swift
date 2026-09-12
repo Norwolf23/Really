@@ -5,81 +5,159 @@ struct StatsView: View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        let now = Date()
-        let today = store.events.filter { Calendar.current.isDateInToday($0.at) }
-        let days = Logic.dailyCounts(events: store.events, days: 7, now: now)
+        let counts = Logic.appCounts(events: store.events)
+        let tried = counts.reduce(0) { $0 + $1.tried }
+        let opened = counts.reduce(0) { $0 + $1.opened }
         NavigationStack {
             List {
-                Section("Today") {
-                    row("Asked", today.count)
-                    row("Said no", today.filter { $0.decision == .no }.count)
-                    row("Went through", today.filter { $0.decision == .proceed }.count)
-                }
-                Section("Streak") {
-                    row("Days in a row with a no", Logic.streak(events: store.events, now: now))
-                }
-                Section("Time saved, roughly") {
-                    row("Minutes", Logic.timeSavedMinutes(events: store.events, apps: store.apps))
+                Section {
+                    Overview(tried: tried, opened: opened)
+                } footer: {
+                    Text("Every time the question showed, and how often it ended with the app closed.")
                 }
                 Section("Last 7 days") {
-                    Chart {
-                        ForEach(days) { day in
-                            BarMark(x: .value("Day", day.day, unit: .day), y: .value("Count", day.nos))
-                                .foregroundStyle(by: .value("Decision", "No"))
-                            BarMark(x: .value("Day", day.day, unit: .day), y: .value("Count", day.proceeds))
-                                .foregroundStyle(by: .value("Decision", "Continue"))
-                        }
-                    }
-                    .chartForegroundStyleScale(["No": Color.white, "Continue": Color.gray])
-                    .chartXAxis {
-                        AxisMarks(values: .stride(by: .day)) { _ in
-                            AxisValueLabel(format: .dateTime.weekday(.narrow))
-                        }
-                    }
-                    .frame(height: 180)
-                    .padding(.vertical, 8)
+                    WeekChart(days: Logic.dailyCounts(events: store.events, days: 7, now: .now))
                 }
-                Section("Excuses, last 7 days") {
-                    let counts = Logic.reasonCounts(events: store.events, since: Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: now)) ?? now)
-                    if counts.isEmpty {
-                        Text("None yet.").foregroundStyle(.secondary)
-                    } else {
-                        Text("Leading excuse: \(counts[0].reason)").font(.subheadline.bold())
-                        ForEach(counts) { row($0.reason, $0.count) }
+                if !counts.isEmpty {
+                    Section("Per app") {
+                        ForEach(counts) { AppRow(app: $0) }
                     }
                 }
-                if let hour = Logic.worstHour(events: store.events) {
-                    Section("Worst hour") {
-                        Text("Most likely to cave: \(String(format: "%02d:00–%02d:00", hour, (hour + 1) % 24))")
+                if tried > 0 {
+                    Section {
+                        HourChart(hours: Logic.hourCounts(events: store.events))
+                    } header: {
+                        Text("By hour of day")
+                    } footer: {
+                        if let hour = Logic.worstHour(events: store.events) {
+                            Text("Most likely to cave: \(String(format: "%02d:00–%02d:00", hour, (hour + 1) % 24))")
+                        }
                     }
                 }
                 Section("Log") {
                     NavigationLink("All check-ins") { LogView() }
                 }
-                Section("Per app") {
-                    ForEach(store.apps) { app in
-                        let mine = today.filter { $0.appID == app.id }
-                        HStack {
-                            Text(app.name)
-                            Spacer()
-                            Text("\(mine.filter { $0.decision == .no }.count) no · \(mine.filter { $0.decision == .proceed }.count) through")
-                                .foregroundStyle(.secondary)
-                            if Logic.isInCooldown(app, now: now) {
-                                Image(systemName: "hourglass").foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
             }
             .navigationTitle("Stats")
         }
     }
+}
 
-    private func row(_ label: String, _ number: Int) -> some View {
-        HStack {
-            Text(label)
+private let outcomeColors: KeyValuePairs<String, Color> = ["Stopped": .white, "Opened": .gray]
+
+private struct Overview: View {
+    let tried: Int
+    let opened: Int
+
+    var body: some View {
+        let stopped = tried - opened
+        let share = tried == 0 ? 0 : Double(stopped) / Double(tried)
+        HStack(spacing: 24) {
+            Gauge(value: share) {
+                Text("Stopped")
+            } currentValueLabel: {
+                Text(tried == 0 ? "–" : "\(Int((share * 100).rounded()))%")
+                    .font(.title3.bold().monospacedDigit())
+            }
+            .gaugeStyle(.accessoryCircularCapacity)
+            .tint(.white)
+            .scaleEffect(1.4)
+            .frame(width: 90, height: 90)
+            VStack(alignment: .leading, spacing: 10) {
+                Counter(label: "Tried to open", number: tried)
+                Counter(label: "Actually opened", number: opened)
+                Counter(label: "Stopped", number: stopped)
+            }
             Spacer()
-            Text("\(number)").bold()
         }
+        .padding(.vertical, 8)
+    }
+}
+
+private struct Counter: View {
+    let label: String
+    let number: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(number)").font(.title3.bold().monospacedDigit())
+            Text(label).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct WeekChart: View {
+    let days: [Logic.DayCount]
+
+    var body: some View {
+        Chart(days) { day in
+            BarMark(x: .value("Day", day.day, unit: .day), y: .value("Count", day.nos))
+                .foregroundStyle(by: .value("Outcome", "Stopped"))
+            BarMark(x: .value("Day", day.day, unit: .day), y: .value("Count", day.proceeds))
+                .foregroundStyle(by: .value("Outcome", "Opened"))
+        }
+        .chartForegroundStyleScale(outcomeColors)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day)) { _ in
+                AxisValueLabel(format: .dateTime.weekday(.narrow))
+            }
+        }
+        .frame(height: 180)
+        .padding(.vertical, 8)
+    }
+}
+
+private struct AppRow: View {
+    let app: Logic.AppCount
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                AppLabel(id: app.id)
+                Spacer()
+                if let share = app.stoppedShare {
+                    Text(share, format: .percent.precision(.fractionLength(0)))
+                        .font(.headline.monospacedDigit())
+                }
+            }
+            Chart {
+                BarMark(x: .value("Count", app.stopped))
+                    .foregroundStyle(by: .value("Outcome", "Stopped"))
+                BarMark(x: .value("Count", app.opened))
+                    .foregroundStyle(by: .value("Outcome", "Opened"))
+            }
+            .chartForegroundStyleScale(outcomeColors)
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .frame(height: 14)
+            Text("\(app.tried) tried · \(app.opened) opened · \(app.stopped) stopped")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct HourChart: View {
+    let hours: [Logic.HourCount]
+
+    var body: some View {
+        Chart(hours) { h in
+            BarMark(x: .value("Hour", h.hour), y: .value("Count", h.stopped))
+                .foregroundStyle(by: .value("Outcome", "Stopped"))
+            BarMark(x: .value("Hour", h.hour), y: .value("Count", h.opened))
+                .foregroundStyle(by: .value("Outcome", "Opened"))
+        }
+        .chartForegroundStyleScale(outcomeColors)
+        .chartXScale(domain: 0...24)
+        .chartXAxis {
+            AxisMarks(values: [0, 6, 12, 18, 24]) { value in
+                AxisValueLabel {
+                    if let h = value.as(Int.self) { Text(String(format: "%02d", h % 24)) }
+                }
+            }
+        }
+        .frame(height: 140)
+        .padding(.vertical, 8)
     }
 }
