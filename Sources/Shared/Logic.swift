@@ -103,6 +103,21 @@ enum Logic {
         return left >= fullBlockSession ? fullBlockSession : nil
     }
 
+    static let freeAppLimit = 1
+
+    /// While Pro is on, or a full block is still inside its last day, every picked app stays.
+    /// Otherwise one app keeps the question shield.
+    static func keptAppIDs(_ ids: [String], pro: Bool, fullBlockActive: Bool) -> Set<String> {
+        if pro || fullBlockActive { return Set(ids) }
+        return Set(ids.sorted().prefix(freeAppLimit))
+    }
+
+    /// Pro ending uses the same rule as turning Full Block off: it holds until the next midnight.
+    static func proLapse(fullBlockEnabled: Bool, offAt: Date?, now: Date, calendar: Calendar = .current) -> (enabled: Bool, offAt: Date?) {
+        guard fullBlockEnabled else { return (false, offAt) }
+        return (false, fullBlockOffDate(now: now, calendar: calendar))
+    }
+
     static func fullBlockShieldLine(remaining: Int) -> String {
         remaining >= fullBlockSession
             ? "Open Really? and write why. \(remaining) minutes left today."

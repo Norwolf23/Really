@@ -3,16 +3,20 @@ import SwiftUI
 @main
 struct ReallyApp: App {
     @StateObject private var store = Store.shared
+    @StateObject private var pro = ProStore()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(store)
+                .environmentObject(pro)
                 .preferredColorScheme(.dark)
+                .task { await pro.start(store) }
                 .onChange(of: scenePhase) { _, phase in
                     guard phase == .active else { return }
                     store.reload()
+                    Task { await pro.refresh() }
                     Shield.reapplyIfIdle(store)
                 }
         }
@@ -21,6 +25,7 @@ struct ReallyApp: App {
 
 struct RootView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var pro: ProStore
     @State private var showFullBlock = false
 
     var body: some View {
@@ -39,6 +44,11 @@ struct RootView: View {
             guard url.scheme == "really", store.settings.hasOnboarded else { return }
             showFullBlock = true
         }
+        .sheet(isPresented: Binding(get: { pro.offer != nil }, set: { if !$0 { pro.offer = nil } })) {
+            PaywallView()
+                .environmentObject(store)
+                .environmentObject(pro)
+        }
         .sheet(isPresented: $showFullBlock) {
             NavigationStack {
                 FullBlockView()
@@ -48,6 +58,8 @@ struct RootView: View {
                         }
                     }
             }
+            .environmentObject(store)
+            .environmentObject(pro)
         }
     }
 

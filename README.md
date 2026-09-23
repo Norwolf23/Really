@@ -22,6 +22,7 @@ Tests: `xcodebuild test -project Really.xcodeproj -scheme Really -destination 'p
 
 iOS now shows the Really? shield whenever one of those apps opens. **No** closes it.
 **Yes, really** lets you in for the cooldown (Settings, 15 min minimum), then the shield is back.
+One app is free. A second app, Full Block, and custom lines are Pro.
 
 ## How it works
 
@@ -32,6 +33,17 @@ Three app extensions share one App Group with the app:
 - `Monitor` puts the shield back when the cooldown ends.
 
 Starter-pack lines are append-only: editing or reordering a pack shifts the "don't repeat the last line" bookkeeping.
+
+## Pro
+
+One app and the question shield are free. Pro adds every other app, Full Block, custom lines, and the reason log.
+
+- `studio.nickson.really.pro.yearly` — $29.99 a year
+- `studio.nickson.really.pro.monthly` — $5.99 a month
+
+Both include a 7-day free trial. Match that introductory offer in App Store Connect. The Really scheme uses `Really.storekit` so Xcode can complete a purchase without the store.
+
+If Pro ends, one app keeps the questions. Full Block stays until the next midnight, then stops.
 
 ## Shipping to the App Store
 

@@ -74,6 +74,8 @@ struct Settings: Codable, Equatable {
     var fullBlockDailyMinutes = 15
     /// Keyed by `TokenID`.
     var fullBlockGrants: [String: [FullBlockGrant]] = [:]
+    /// Copied from StoreKit by the app. The shield only reads this.
+    var isPro = false
 
     init() {}
 
@@ -92,6 +94,7 @@ struct Settings: Codable, Equatable {
         fullBlockOffAt = try c.decodeIfPresent(Date.self, forKey: .fullBlockOffAt) ?? fullBlockOffAt
         fullBlockDailyMinutes = try c.decodeIfPresent(Int.self, forKey: .fullBlockDailyMinutes) ?? fullBlockDailyMinutes
         fullBlockGrants = try c.decodeIfPresent([String: [FullBlockGrant]].self, forKey: .fullBlockGrants) ?? fullBlockGrants
+        isPro = try c.decodeIfPresent(Bool.self, forKey: .isPro) ?? isPro
     }
 }
 

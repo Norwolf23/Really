@@ -35,7 +35,8 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
         }
         let tier = Logic.effectiveTier(base: settings.meanness, openNumber: openNumber,
                                        annoyedAt: settings.annoyedAt, brutalAt: settings.brutalAt, escalates: settings.escalates)
-        let pack = store.custom[id]?.questions ?? Packs.questions(for: Catalog.pack(for: application.bundleIdentifier ?? ""))
+        let custom = settings.isPro ? store.custom[id]?.questions : nil
+        let pack = custom ?? Packs.questions(for: Catalog.pack(for: application.bundleIdentifier ?? ""))
         var rng = SystemRandomNumberGenerator()
         let question = Logic.pickQuestion(pack: pack, tier: tier, using: &rng)
             ?? Question(id: "fallback", text: "Are you avoiding something again?", tier: .normal)

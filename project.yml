@@ -124,6 +124,7 @@ schemes:
         ReallyTests: [test]
     run:
       config: Debug
+      storeKitConfiguration: Really.storekit
     test:
       config: Debug
       targets:

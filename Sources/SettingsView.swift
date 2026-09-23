@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var pro: ProStore
 
     var body: some View {
         NavigationStack {
@@ -13,6 +14,7 @@ struct SettingsView: View {
                         .tracking(1.8)
                         .foregroundStyle(Palette.dim)
                     VStack(spacing: 10) {
+                        node("Really Pro", value: store.settings.isPro ? "On" : "Free") { PaywallView() }
                         node("Full block", value: fullBlockValue) { FullBlockView() }
                         node("Tone", value: OnboardingView.name(for: store.settings.meanness)) { ToneSettings() }
                         node("Timing", value: timingValue) { TimingSettings() }

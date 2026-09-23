@@ -5,6 +5,7 @@ import SwiftUI
 /// One app's shield lines: pick the built-in pack once, then delete lines, add your own, or restore.
 struct MessagesView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var pro: ProStore
     let id: String
     let token: ApplicationToken
     @State private var adding = false
@@ -12,7 +13,19 @@ struct MessagesView: View {
 
     var body: some View {
         Group {
-            if let pack = store.custom[id] {
+            if !store.settings.isPro {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Custom lines are part of Pro.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                    Button("See Pro") { pro.offer = .lines }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.white)
+                        .foregroundStyle(.black)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(24)
+            } else if let pack = store.custom[id] {
                 editor(pack)
             } else {
                 chooser

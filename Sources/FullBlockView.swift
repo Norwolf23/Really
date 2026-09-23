@@ -5,6 +5,7 @@ import SwiftUI
 /// Full block lives here, not on each app. Darker than the rest of Settings, on purpose.
 struct FullBlockView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var pro: ProStore
     @State private var reason = ""
     @State private var picked: String? = nil
 
@@ -79,6 +80,10 @@ struct FullBlockView: View {
         Binding(
             get: { store.settings.fullBlockEnabled },
             set: { on in
+                if on && !store.settings.isPro {
+                    pro.offer = .fullBlock
+                    return
+                }
                 if on {
                     store.settings.fullBlockEnabled = true
                     store.settings.fullBlockOffAt = nil

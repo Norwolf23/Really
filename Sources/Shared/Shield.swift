@@ -9,8 +9,10 @@ enum Shield {
     /// Shield the picked apps, leaving off anything with a live cooldown or an open full-block grant.
     static func apply(_ store: Store, now: Date = .now) {
         let active = Logic.fullBlockIsActive(enabled: store.settings.fullBlockEnabled, offAt: store.settings.fullBlockOffAt, now: now)
+        let allowedIDs = Logic.keptAppIDs(store.settings.selection.applicationTokens.map(TokenID.string), pro: store.settings.isPro, fullBlockActive: active)
+        let allowed = store.settings.selection.applicationTokens.filter { allowedIDs.contains(TokenID.string($0)) }
         let unlocked = Logic.unlockedIDs(cooldowns: store.state.cooldowns, grants: store.settings.fullBlockGrants, fullBlockActive: active, now: now)
-        let tokens = store.settings.selection.applicationTokens.subtracting(Set(unlocked.compactMap(TokenID.token)))
+        let tokens = allowed.subtracting(Set(unlocked.compactMap(TokenID.token)))
         let current = ManagedSettingsStore().shield.applications ?? []
         if current != tokens {
             ManagedSettingsStore().shield.applications = tokens.isEmpty ? nil : tokens

@@ -3,8 +3,10 @@ import SwiftUI
 
 struct AppsView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var pro: ProStore
     @State private var picking = false
     @State private var denied = false
+    @State private var trimming = false
 
     var body: some View {
         let tokens = Array(store.settings.selection.applicationTokens)
@@ -28,6 +30,14 @@ struct AppsView: View {
                     ContentUnavailableView("No apps yet", systemImage: "app.badge", description: Text("Pick the apps you open more than you mean to."))
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                if !store.settings.isPro && tokens.count > Logic.freeAppLimit {
+                    Text("One app is free. Pro covers the rest.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 8)
+                }
+            }
             .navigationTitle("Really?")
             .toolbar {
                 Button(tokens.isEmpty ? "Pick apps" : "Change") {
@@ -35,7 +45,24 @@ struct AppsView: View {
                 }
             }
             .familyActivityPicker(isPresented: $picking, selection: $store.settings.selection)
-            .onChange(of: store.settings.selection) { _, _ in Shield.apply(store) }
+            .onChange(of: store.settings.selection) { old, selection in
+                guard !trimming else { return }
+                let active = Logic.fullBlockIsActive(enabled: store.settings.fullBlockEnabled, offAt: store.settings.fullBlockOffAt, now: .now)
+                if !store.settings.isPro && !active && selection.applicationTokens.count > Logic.freeAppLimit {
+                    trimming = true
+                    var trimmed = selection
+                    if !old.applicationTokens.isEmpty && old.applicationTokens.count <= Logic.freeAppLimit {
+                        trimmed.applicationTokens = old.applicationTokens
+                    } else {
+                        let kept = Logic.keptAppIDs(selection.applicationTokens.map(TokenID.string), pro: false, fullBlockActive: false)
+                        trimmed.applicationTokens = selection.applicationTokens.filter { kept.contains(TokenID.string($0)) }
+                    }
+                    store.settings.selection = trimmed
+                    trimming = false
+                    pro.offer = .secondApp
+                }
+                Shield.apply(store)
+            }
             .alert("Screen Time access needed", isPresented: $denied) {
                 Button("OK") {}
             } message: {

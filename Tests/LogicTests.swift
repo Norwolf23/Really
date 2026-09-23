@@ -166,6 +166,23 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(Logic.unlockedIDs(cooldowns: [ig: future], grants: [:], fullBlockActive: false, now: now), [ig])
     }
 
+    func testFreeTierKeepsOneAppUnlessProOrFullBlock() {
+        XCTAssertEqual(Logic.keptAppIDs(["b", "a", "c"], pro: false, fullBlockActive: false), Set(["a"]))
+        XCTAssertEqual(Logic.keptAppIDs(["b", "a"], pro: true, fullBlockActive: false), Set(["a", "b"]))
+        XCTAssertEqual(Logic.keptAppIDs(["b", "a"], pro: false, fullBlockActive: true), Set(["a", "b"]))
+        XCTAssertTrue(Logic.keptAppIDs([], pro: false, fullBlockActive: false).isEmpty)
+    }
+
+    func testProLapseHoldsFullBlockUntilTomorrow() {
+        let tomorrow = Logic.fullBlockOffDate(now: now, calendar: cal)
+        let lapse = Logic.proLapse(fullBlockEnabled: true, offAt: nil, now: now, calendar: cal)
+        XCTAssertFalse(lapse.enabled)
+        XCTAssertEqual(lapse.offAt, tomorrow)
+        let already = Logic.proLapse(fullBlockEnabled: false, offAt: tomorrow, now: now, calendar: cal)
+        XCTAssertFalse(already.enabled)
+        XCTAssertEqual(already.offAt, tomorrow)
+    }
+
     func testFullBlockShieldLine() {
         XCTAssertEqual(Logic.fullBlockShieldLine(remaining: 15), "Open Really? and write why. 15 minutes left today.")
         XCTAssertEqual(Logic.fullBlockShieldLine(remaining: 0), "No time left today.")
