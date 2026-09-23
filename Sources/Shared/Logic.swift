@@ -73,6 +73,50 @@ enum Logic {
         primary && !gentle ? .close : .through
     }
 
+    /// Each reason buys this many minutes.
+    static let fullBlockSession = 5
+
+    static func fullBlockMinutesUsed(_ grants: [FullBlockGrant], now: Date, calendar: Calendar = .current) -> Int {
+        grants.filter { calendar.isDate($0.at, inSameDayAs: now) }.reduce(0) { $0 + $1.minutes }
+    }
+
+    static func fullBlockRemaining(dailyMinutes: Int, grants: [FullBlockGrant], now: Date, calendar: Calendar = .current) -> Int {
+        max(0, dailyMinutes - fullBlockMinutesUsed(grants, now: now, calendar: calendar))
+    }
+
+    /// On takes effect now. Off waits until the next midnight, and the block stays up until then.
+    static func fullBlockOffDate(now: Date, calendar: Calendar = .current) -> Date {
+        let start = calendar.startOfDay(for: now)
+        return calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(86_400)
+    }
+
+    static func fullBlockIsActive(enabled: Bool, offAt: Date?, now: Date) -> Bool {
+        if enabled { return true }
+        if let offAt, now < offAt { return true }
+        return false
+    }
+
+    /// Nil when full block is off, a grant is still open, or less than one session is left today.
+    static func fullBlockGrantMinutes(active: Bool, dailyMinutes: Int, grants: [FullBlockGrant], now: Date, calendar: Calendar = .current) -> Int? {
+        guard active, !grants.contains(where: { $0.until > now }) else { return nil }
+        let left = fullBlockRemaining(dailyMinutes: dailyMinutes, grants: grants, now: now, calendar: calendar)
+        return left >= fullBlockSession ? fullBlockSession : nil
+    }
+
+    static func fullBlockShieldLine(remaining: Int) -> String {
+        remaining >= fullBlockSession
+            ? "Open Really? and write why. \(remaining) minutes left today."
+            : "No time left today."
+    }
+
+    /// Apps that should be unshielded right now. While full block is active, only an open grant lifts an app.
+    /// A question cooldown does not.
+    static func unlockedIDs(cooldowns: [String: Date], grants: [String: [FullBlockGrant]], fullBlockActive: Bool, now: Date) -> Set<String> {
+        let cooled = Set(cooldowns.filter { $0.value > now }.map(\.key))
+        let open = Set(grants.compactMap { id, list in list.contains { $0.until > now } ? id : nil })
+        return fullBlockActive ? open : cooled.union(open)
+    }
+
     static func anyCooldownActive(_ cooldowns: [String: Date], now: Date) -> Bool {
         cooldowns.values.contains { $0 > now }
     }

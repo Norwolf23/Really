@@ -33,7 +33,32 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(old.meanness, .brutal)
         XCTAssertEqual(old.cooldownMinutes, 15)
         XCTAssertTrue(old.selection.includeEntireCategory)
+        XCTAssertFalse(old.fullBlockEnabled)
+        XCTAssertNil(old.fullBlockOffAt)
+        XCTAssertEqual(old.fullBlockDailyMinutes, 15)
+        XCTAssertTrue(old.fullBlockGrants.isEmpty)
         XCTAssertEqual(try JSONDecoder().decode(Settings.self, from: Data("{}".utf8)), Settings())
+    }
+
+    func testFullBlockRoundTripsOnSettings() throws {
+        var s = Settings()
+        let grant = FullBlockGrant(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            reason: "reply",
+            at: Date(timeIntervalSince1970: 10),
+            until: Date(timeIntervalSince1970: 20),
+            minutes: 15)
+        s.fullBlockEnabled = true
+        s.fullBlockOffAt = Date(timeIntervalSince1970: 1_800_086_400)
+        s.fullBlockDailyMinutes = 30
+        s.fullBlockGrants["abc"] = [grant]
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .secondsSince1970
+        let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .secondsSince1970
+        let back = try decoder.decode(Settings.self, from: encoder.encode(s))
+        XCTAssertEqual(back.fullBlockEnabled, s.fullBlockEnabled)
+        XCTAssertEqual(back.fullBlockDailyMinutes, s.fullBlockDailyMinutes)
+        XCTAssertEqual(back.fullBlockOffAt?.timeIntervalSince1970 ?? 0, s.fullBlockOffAt?.timeIntervalSince1970 ?? 0, accuracy: 1)
+        XCTAssertEqual(back.fullBlockGrants, s.fullBlockGrants)
     }
 
     func testTokenIDRoundTripsGarbageToNil() {

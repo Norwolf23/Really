@@ -59,6 +59,10 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIUserInterfaceStyle: Dark
+        CFBundleURLTypes:
+          - CFBundleURLName: studio.nickson.really
+            CFBundleURLSchemes:
+              - really
     settings:
       groups: [signing]
       base:

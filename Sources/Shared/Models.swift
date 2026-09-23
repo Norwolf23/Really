@@ -46,6 +46,16 @@ enum TokenID {
     }
 }
 
+/// One written reason that lifts a full block. `minutes` is what counts against the daily cap.
+/// `until` is when the shield comes back (a minute past `minutes`, because DeviceActivity rounds down).
+struct FullBlockGrant: Codable, Equatable, Identifiable {
+    var id = UUID()
+    var reason: String
+    var at: Date
+    var until: Date
+    var minutes: Int
+}
+
 /// Written by the app only.
 struct Settings: Codable, Equatable {
     var hasOnboarded = false
@@ -58,6 +68,12 @@ struct Settings: Codable, Equatable {
     var gentleFirst = true
     /// includeEntireCategory: a ticked category expands into app tokens, so category picks shield something.
     var selection = FamilyActivitySelection(includeEntireCategory: true)
+    /// One switch for every picked app. Turning it off sets `fullBlockOffAt` to the next midnight and leaves today blocked.
+    var fullBlockEnabled = false
+    var fullBlockOffAt: Date? = nil
+    var fullBlockDailyMinutes = 15
+    /// Keyed by `TokenID`.
+    var fullBlockGrants: [String: [FullBlockGrant]] = [:]
 
     init() {}
 
@@ -72,6 +88,10 @@ struct Settings: Codable, Equatable {
         brutalAt = try c.decodeIfPresent(Int.self, forKey: .brutalAt) ?? brutalAt
         gentleFirst = try c.decodeIfPresent(Bool.self, forKey: .gentleFirst) ?? gentleFirst
         selection = try c.decodeIfPresent(FamilyActivitySelection.self, forKey: .selection) ?? selection
+        fullBlockEnabled = try c.decodeIfPresent(Bool.self, forKey: .fullBlockEnabled) ?? fullBlockEnabled
+        fullBlockOffAt = try c.decodeIfPresent(Date.self, forKey: .fullBlockOffAt) ?? fullBlockOffAt
+        fullBlockDailyMinutes = try c.decodeIfPresent(Int.self, forKey: .fullBlockDailyMinutes) ?? fullBlockDailyMinutes
+        fullBlockGrants = try c.decodeIfPresent([String: [FullBlockGrant]].self, forKey: .fullBlockGrants) ?? fullBlockGrants
     }
 }
 

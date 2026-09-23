@@ -131,6 +131,47 @@ final class LogicTests: XCTestCase {
 
     // MARK: cooldowns
 
+    func testFullBlockRemainingCountsTodayOnly() {
+        let yesterday = FullBlockGrant(reason: "old", at: now.addingTimeInterval(-86_400), until: now.addingTimeInterval(-80_000), minutes: 15)
+        let today = FullBlockGrant(reason: "now", at: now.addingTimeInterval(-60), until: now.addingTimeInterval(-1), minutes: 15)
+        XCTAssertEqual(Logic.fullBlockMinutesUsed([yesterday, today], now: now, calendar: cal), 15)
+        XCTAssertEqual(Logic.fullBlockRemaining(dailyMinutes: 15, grants: [yesterday, today], now: now, calendar: cal), 0)
+        XCTAssertEqual(Logic.fullBlockRemaining(dailyMinutes: 45, grants: [today], now: now, calendar: cal), 30)
+    }
+
+    func testFullBlockStaysOnUntilTheNextDayAfterSwitchingOff() {
+        let tomorrow = Logic.fullBlockOffDate(now: now, calendar: cal)
+        XCTAssertEqual(tomorrow, cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: now)))
+        XCTAssertTrue(Logic.fullBlockIsActive(enabled: true, offAt: nil, now: now))
+        XCTAssertTrue(Logic.fullBlockIsActive(enabled: false, offAt: tomorrow, now: now))
+        XCTAssertFalse(Logic.fullBlockIsActive(enabled: false, offAt: tomorrow, now: tomorrow))
+        XCTAssertFalse(Logic.fullBlockIsActive(enabled: false, offAt: nil, now: now))
+    }
+
+    func testFullBlockGrantIsFifteenUntilTheDayIsSpentOrOneIsOpen() {
+        XCTAssertNil(Logic.fullBlockGrantMinutes(active: false, dailyMinutes: 15, grants: [], now: now, calendar: cal))
+        XCTAssertEqual(Logic.fullBlockGrantMinutes(active: true, dailyMinutes: 15, grants: [], now: now, calendar: cal), 5)
+        let open = [FullBlockGrant(reason: "x", at: now, until: now.addingTimeInterval(60), minutes: 15)]
+        XCTAssertNil(Logic.fullBlockGrantMinutes(active: true, dailyMinutes: 30, grants: open, now: now, calendar: cal))
+        let spent = [FullBlockGrant(reason: "x", at: now.addingTimeInterval(-120), until: now.addingTimeInterval(-1), minutes: 15)]
+        XCTAssertNil(Logic.fullBlockGrantMinutes(active: true, dailyMinutes: 15, grants: spent, now: now, calendar: cal))
+        XCTAssertEqual(Logic.fullBlockGrantMinutes(active: true, dailyMinutes: 30, grants: spent, now: now, calendar: cal), 5)
+    }
+
+    func testFullBlockUnlockOverridesAQuestionCooldown() {
+        let future = now.addingTimeInterval(100)
+        XCTAssertEqual(Logic.unlockedIDs(cooldowns: [ig: future], grants: [:], fullBlockActive: true, now: now), [])
+        let grant = FullBlockGrant(reason: "x", at: now, until: future, minutes: 15)
+        XCTAssertEqual(Logic.unlockedIDs(cooldowns: [:], grants: [ig: [grant]], fullBlockActive: true, now: now), [ig])
+        XCTAssertEqual(Logic.unlockedIDs(cooldowns: [ig: future], grants: [:], fullBlockActive: false, now: now), [ig])
+    }
+
+    func testFullBlockShieldLine() {
+        XCTAssertEqual(Logic.fullBlockShieldLine(remaining: 15), "Open Really? and write why. 15 minutes left today.")
+        XCTAssertEqual(Logic.fullBlockShieldLine(remaining: 0), "No time left today.")
+        XCTAssertEqual(Logic.fullBlockShieldLine(remaining: 4), "No time left today.")
+    }
+
     func testAnyCooldownActive() {
         XCTAssertFalse(Logic.anyCooldownActive([:], now: now))
         XCTAssertFalse(Logic.anyCooldownActive([ig: now], now: now))

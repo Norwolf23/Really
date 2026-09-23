@@ -21,6 +21,7 @@ struct ReallyApp: App {
 
 struct RootView: View {
     @EnvironmentObject var store: Store
+    @State private var showFullBlock = false
 
     var body: some View {
         TabView {
@@ -33,6 +34,20 @@ struct RootView: View {
         }
         .fullScreenCover(isPresented: onboarding) {
             OnboardingView()
+        }
+        .onOpenURL { url in
+            guard url.scheme == "really", store.settings.hasOnboarded else { return }
+            showFullBlock = true
+        }
+        .sheet(isPresented: $showFullBlock) {
+            NavigationStack {
+                FullBlockView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showFullBlock = false }
+                        }
+                    }
+            }
         }
     }
 
