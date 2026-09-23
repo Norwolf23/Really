@@ -8,8 +8,6 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    NavigationLink { ProfileSoonView() } label: { profileNode }
-                        .buttonStyle(.plain)
                     Text("PREFERENCES")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .tracking(1.8)
@@ -28,32 +26,6 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
-    }
-
-    private var profileNode: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "person.crop.circle")
-                .font(.system(size: 36, weight: .light))
-                .foregroundStyle(.white)
-                .frame(width: 52, height: 52)
-                .background(Palette.panel, in: Circle())
-                .overlay(Circle().stroke(Palette.line, lineWidth: 1))
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Profile")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                Text("Coming soon")
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(Palette.dim)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Palette.dim)
-        }
-        .padding(14)
-        .background(Palette.panel, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
     }
 
     private func node<Destination: View>(_ title: String, value: String, @ViewBuilder destination: () -> Destination) -> some View {
@@ -103,30 +75,6 @@ struct SettingsView: View {
         static let panel = Color(red: 0.07, green: 0.075, blue: 0.082)
         static let line = Color.white.opacity(0.12)
         static let dim = Color.white.opacity(0.45)
-    }
-}
-
-private struct ProfileSoonView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("ACCOUNT")
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .tracking(2.2)
-                .foregroundStyle(.white.opacity(0.45))
-            Text("Coming soon.")
-                .font(.system(size: 34, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white)
-            Text("Sign in will live here, so the history on this phone can follow you. It isn't here yet.")
-                .font(.system(size: 15, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.6))
-            Spacer()
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color(red: 0.03, green: 0.035, blue: 0.04).ignoresSafeArea())
-        .navigationTitle("Profile")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
 
