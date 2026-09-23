@@ -3,13 +3,12 @@ import SwiftUI
 
 struct OnboardingView: View {
     @EnvironmentObject var store: Store
-    @Environment(\.openURL) private var openURL
 
     @State private var step = 0
     @State private var meanness = Tier.normal
-    @State private var suggested: [Catalog.Entry] = [] // in the order they were tapped
     @State private var picking = false
     @State private var denied = false
+    @State private var confirmSkip = false
 
     var body: some View {
         ZStack {
@@ -43,7 +42,7 @@ struct OnboardingView: View {
         .onChange(of: picking) { _, open in
             // The picker closed: iOS has the real list now. Shield it and move on.
             guard !open, !store.settings.selection.applicationTokens.isEmpty else { return }
-            Shield.apply(store.settings.selection)
+            Shield.apply(store)
             step = 5
         }
     }
@@ -97,40 +96,40 @@ struct OnboardingView: View {
         .padding(.bottom, 24)
     }
 
-    /// Suggestion tiles first, then Apple's picker. The tiles can't shield anything themselves: iOS only shields
-    /// what's ticked in its own list, and that list can't be pre-ticked. They tell the person what to tick.
     private var chooseApps: some View {
-        VStack(spacing: 16) {
-            heading("Which apps?")
-            Text("Pick the ones that open themselves.").foregroundStyle(.gray)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
-                ForEach(Catalog.entries) { entry in
-                    let on = suggested.contains(entry)
-                    Button {
-                        if on { suggested.removeAll { $0 == entry } } else { suggested.append(entry) }
-                    } label: {
-                        Text(entry.name)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(on ? Color.white : Color(white: 0.09), in: RoundedRectangle(cornerRadius: 14))
-                            .foregroundStyle(on ? .black : .white)
-                    }
-                }
-            }
-            Text(suggested.isEmpty ? "Nothing picked yet." : "\(suggested.count) picked. Tick the same ones in the next screen.")
-                .font(.footnote).foregroundStyle(.gray)
+        VStack(spacing: 28) {
+            Spacer()
+            Text("Select your apps, please.")
+                .font(.system(size: 36, weight: .semibold, design: .serif))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+            Text("This opens Screen Time. Choose the apps there.")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.gray)
             if denied {
                 Text("Allow Really? under Settings → Screen Time → Apps with Screen Time Access, then try again.")
                     .font(.footnote).foregroundStyle(.orange).multilineTextAlignment(.center)
             }
             Spacer()
-            primary("Continue") { openPicker() }
-                .disabled(suggested.isEmpty)
-            Button("Select more…") { openPicker() }
+            VStack(spacing: 12) {
+                primary("Open Screen Time") { openPicker() }
+                Button("Next") {
+                    if store.settings.selection.applicationTokens.isEmpty {
+                        confirmSkip = true
+                    } else {
+                        Shield.apply(store)
+                        step = 5
+                    }
+                }
                 .foregroundStyle(.gray)
+            }
+            .alert("You have not selected any apps, are you sure you want to continue?", isPresented: $confirmSkip) {
+                Button("Continue") { step = 5 }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You can change this later on")
+            }
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 24)
@@ -147,15 +146,7 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.gray)
             Spacer()
-            if let first = suggested.first, let url = URL(string: first.scheme) {
-                primary("Open \(first.name)") {
-                    finish()
-                    openURL(url)
-                }
-                Button("Later") { finish() }.foregroundStyle(.gray)
-            } else {
-                primary("Okay") { finish() }
-            }
+            primary("Okay") { finish() }
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 24)

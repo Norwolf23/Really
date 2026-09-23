@@ -8,11 +8,18 @@ struct AppsView: View {
 
     var body: some View {
         let tokens = Array(store.settings.selection.applicationTokens)
+        let blocked = Logic.fullBlockIsActive(enabled: store.settings.fullBlockEnabled, offAt: store.settings.fullBlockOffAt, now: .now)
         NavigationStack {
             List {
                 ForEach(tokens, id: \.self) { token in
-                    NavigationLink { MessagesView(id: TokenID.string(token), token: token) } label: {
-                        Label(token).labelStyle(.titleAndIcon)
+                    let id = TokenID.string(token)
+                    NavigationLink { MessagesView(id: id, token: token) } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Label(token).labelStyle(.titleAndIcon)
+                            if blocked {
+                                Text("Full block").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 }
             }
@@ -28,7 +35,7 @@ struct AppsView: View {
                 }
             }
             .familyActivityPicker(isPresented: $picking, selection: $store.settings.selection)
-            .onChange(of: store.settings.selection) { _, selection in Shield.apply(selection) }
+            .onChange(of: store.settings.selection) { _, _ in Shield.apply(store) }
             .alert("Screen Time access needed", isPresented: $denied) {
                 Button("OK") {}
             } message: {

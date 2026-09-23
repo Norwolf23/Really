@@ -9,6 +9,18 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
         let store = Store()
         let settings = store.settings
         let id = application.token.map(TokenID.string) ?? "unknown"
+        if Logic.fullBlockIsActive(enabled: settings.fullBlockEnabled, offAt: settings.fullBlockOffAt, now: .now) {
+            let left = Logic.fullBlockRemaining(dailyMinutes: settings.fullBlockDailyMinutes, grants: settings.fullBlockGrants[id] ?? [], now: .now)
+            return ShieldConfiguration(
+                backgroundBlurStyle: .systemUltraThinMaterialDark,
+                backgroundColor: .black,
+                icon: UIImage(named: "shield-icon"),
+                title: ShieldConfiguration.Label(text: "Full block.", color: .gray),
+                subtitle: ShieldConfiguration.Label(text: Logic.fullBlockShieldLine(remaining: left), color: .white),
+                primaryButtonLabel: ShieldConfiguration.Label(text: "Close", color: .black),
+                primaryButtonBackgroundColor: .white
+            )
+        }
         let openNumber = Logic.openNumberToday(events: store.events, appID: id, now: .now)
         if Logic.isGentle(openNumber: openNumber, limit: Logic.gentleLimit(now: .now), enabled: settings.gentleFirst) {
             return ShieldConfiguration(
