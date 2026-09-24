@@ -27,6 +27,7 @@ targetTemplates:
     info:
       path: Extensions/${target_name}-Info.plist
       properties:
+        CFBundleDisplayName: "Really?"
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     settings:
