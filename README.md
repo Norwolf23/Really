@@ -2,6 +2,10 @@
 
 A dry, sarcastic question in front of an app you open too much.
 
+## Support
+
+Open an issue on this repo. Nothing in the app is sent off the phone.
+
 ## Build
 
     brew install xcodegen   # once
